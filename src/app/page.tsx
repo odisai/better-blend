@@ -11,6 +11,7 @@ import {
   LogOut,
   MoreVertical,
   Link2,
+  LayoutDashboard,
 } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
@@ -165,6 +166,14 @@ export default function LandingPage() {
         <div className="flex items-center gap-4">
           {isAuthenticated ? (
             <>
+              <Button
+                onClick={() => router.push("/dashboard")}
+                variant="ghost"
+                className="hidden text-sm font-medium text-gray-300 hover:bg-white/10 hover:text-white sm:flex"
+              >
+                <LayoutDashboard className="mr-2 h-4 w-4" />
+                My Blends
+              </Button>
               <div className="hidden items-center gap-3 sm:flex">
                 {session?.user?.image && (
                   <Image
