@@ -37,8 +37,8 @@ export const authConfig = {
   // This is the recommended approach for NextAuth v5 (see: https://authjs.dev/reference/nextjs#environment-variable-inference)
   // Setting AUTH_URL explicitly is still supported but not required
   trustHost: true,
-  // Explicitly set basePath to ensure URLs are constructed correctly
-  basePath: "/api/auth",
+  // Note: basePath is not a valid NextAuth v5 option - the base path is automatically inferred
+  // from the route structure (/api/auth/[...nextauth])
   providers: [
     SpotifyProvider({
       // SPOTIFY_CLIENT_ID and SPOTIFY_CLIENT_SECRET are required by env schema (z.string())
