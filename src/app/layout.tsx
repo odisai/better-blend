@@ -2,6 +2,7 @@ import type React from "react";
 import type { Metadata } from "next";
 import { Outfit, Plus_Jakarta_Sans } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
+import { Providers } from "@/components/providers";
 import "@/styles/globals.css";
 
 const outfit = Outfit({
@@ -31,7 +32,7 @@ export default function RootLayout({
       <body
         className={`${outfit.variable} ${jakarta.variable} font-sans antialiased`}
       >
-        {children}
+        <Providers>{children}</Providers>
         <Analytics />
       </body>
     </html>
