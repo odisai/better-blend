@@ -14,10 +14,10 @@ export const env = createEnv({
       process.env.NODE_ENV === "production"
         ? z.string()
         : z.string().optional(),
-    // AUTH_URL is used by NextAuth to construct callback URLs
-    // If not set, NextAuth will try to infer from headers (trustHost: true)
-    // Fallback logic in runtimeEnv handles Vercel deployments and localhost
-    // NOTE: In production, AUTH_URL should be explicitly set to avoid "Invalid URL" errors
+    // AUTH_URL is optional when trustHost: true is set in auth config
+    // NextAuth v5 can infer the URL from request headers when trustHost is enabled
+    // However, setting it explicitly can help avoid "Invalid URL" errors in some edge cases
+    // See: https://authjs.dev/reference/nextjs#environment-variable-inference
     AUTH_URL: z.string().url().optional(),
     SPOTIFY_CLIENT_ID: z.string(),
     SPOTIFY_CLIENT_SECRET: z.string(),
@@ -42,39 +42,43 @@ export const env = createEnv({
    */
   runtimeEnv: {
     AUTH_SECRET: process.env.AUTH_SECRET,
-    // Fallback to Vercel URL or localhost if AUTH_URL is not set
-    // NextAuth v5 reads AUTH_URL from process.env, so we set it here if missing
-    // IMPORTANT: AUTH_URL must always be a valid URL or NextAuth v5 will throw "Invalid URL" error
+    // AUTH_URL handling with trustHost: true support
+    // With trustHost: true, NextAuth v5 can infer URL from headers, so AUTH_URL is optional
+    // However, we provide fallbacks for convenience and to avoid edge cases
+    // See Reddit discussion: https://www.reddit.com/r/nextjs/comments/.../
     AUTH_URL: (() => {
-      // Check for explicit AUTH_URL first
+      // If explicitly set, use it (but ensure no trailing slash)
       if (process.env.AUTH_URL) {
-        return process.env.AUTH_URL;
+        const url = process.env.AUTH_URL.trim().replace(/\/$/, "");
+        // Only set if it's different to avoid unnecessary writes
+        if (url !== process.env.AUTH_URL) {
+          process.env.AUTH_URL = url;
+        }
+        return url;
       }
 
-      // Vercel provides VERCEL_URL (without protocol) or VERCEL_BRANCH_URL
+      // Vercel provides VERCEL_URL (without protocol)
+      // Only set if we have a valid VERCEL_URL to avoid "Invalid URL" errors
       if (process.env.VERCEL_URL) {
-        const vercelUrl = `https://${process.env.VERCEL_URL}`;
+        const vercelUrl = `https://${process.env.VERCEL_URL}`.replace(
+          /\/$/,
+          "",
+        );
         process.env.AUTH_URL = vercelUrl;
         return vercelUrl;
       }
 
-      // Development fallback
+      // Development fallback - helpful for local development
       if (process.env.NODE_ENV === "development") {
         const localhostUrl = "http://localhost:3000";
+        // Only set in dev for convenience, but trustHost will handle it anyway
         process.env.AUTH_URL = localhostUrl;
         return localhostUrl;
       }
 
-      // Production without VERCEL_URL - this will cause an error
-      // User must set AUTH_URL explicitly in Vercel environment variables
-      // Return undefined to trigger validation error with helpful message
-      if (process.env.NODE_ENV === "production") {
-        console.error(
-          "❌ AUTH_URL is required in production. Please set it in Vercel environment variables:\n" +
-            "   AUTH_URL=https://your-app.vercel.app",
-        );
-      }
-
+      // In production with trustHost: true, NextAuth can infer from headers
+      // Return undefined to let NextAuth handle it via trustHost
+      // This matches the Reddit solution of removing AUTH_URL entirely
       return undefined;
     })(),
     SPOTIFY_CLIENT_ID: process.env.SPOTIFY_CLIENT_ID,

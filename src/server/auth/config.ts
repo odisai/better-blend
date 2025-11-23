@@ -33,7 +33,9 @@ declare module "next-auth" {
  */
 export const authConfig = {
   // trustHost allows NextAuth to infer the URL from request headers
-  // In production, AUTH_URL should be set in Vercel env vars: https://better-blend.vercel.app
+  // With trustHost: true, AUTH_URL becomes optional - NextAuth will infer it from headers
+  // This is the recommended approach for NextAuth v5 (see: https://authjs.dev/reference/nextjs#environment-variable-inference)
+  // Setting AUTH_URL explicitly is still supported but not required
   trustHost: true,
   // Explicitly set basePath to ensure URLs are constructed correctly
   basePath: "/api/auth",
