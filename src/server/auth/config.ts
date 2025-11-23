@@ -79,6 +79,9 @@ export const authOptions: NextAuthOptions = {
             "playlist-modify-private",
             "playlist-read-private",
           ].join(" "),
+          // Explicitly set redirect URI for local development
+          // Ensures it uses http://127.0.0.1:3000 instead of localhost
+          redirect_uri: `${env.NEXTAUTH_URL}/api/auth/callback/spotify`,
         },
       },
     }),
