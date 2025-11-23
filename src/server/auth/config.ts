@@ -32,7 +32,9 @@ declare module "next-auth" {
  * @see https://next-auth.js.org/configuration/options
  */
 export const authConfig = {
-  trustHost: true, // Trust the host header (useful for development and production)
+  // trustHost allows NextAuth to infer the URL from request headers
+  // In production, AUTH_URL should be set in Vercel env vars: https://better-blend.vercel.app
+  trustHost: true,
   providers: [
     SpotifyProvider({
       clientId: env.SPOTIFY_CLIENT_ID,
