@@ -10,6 +10,7 @@ import {
   Users,
   LogOut,
   MoreVertical,
+  Link2,
 } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
@@ -210,9 +211,11 @@ export default function LandingPage() {
               <Button
                 size="lg"
                 variant="outline"
+                onClick={() => router.push("/join")}
                 className="h-12 min-w-[180px] rounded-full border-white/20 bg-transparent px-8 text-white hover:bg-white/10 hover:text-white"
               >
-                See Example
+                <Link2 className="mr-2 h-4 w-4" />
+                Join via Link
               </Button>
             </div>
 

@@ -47,7 +47,7 @@ export async function getSpotifyAccessToken(userId: string): Promise<string> {
       });
 
       return refreshedToken.access_token;
-    } catch {
+    } catch (error) {
       throw new TRPCError({
         code: "INTERNAL_SERVER_ERROR",
         message: "Failed to refresh Spotify token. Please sign in again.",

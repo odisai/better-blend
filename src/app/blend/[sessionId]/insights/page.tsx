@@ -1,7 +1,7 @@
 "use client";
 
 import { useParams, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -38,6 +38,13 @@ export default function InsightsPage() {
   const router = useRouter();
   const sessionId = params?.sessionId as string;
   const [dataFetched, setDataFetched] = useState(false);
+  const fetchInitiatedRef = useRef(false);
+
+  // Reset ref when sessionId changes
+  useEffect(() => {
+    fetchInitiatedRef.current = false;
+    setDataFetched(false);
+  }, [sessionId]);
 
   const { data: session, isLoading: isLoadingSession } =
     api.session.get.useQuery(
@@ -53,6 +60,10 @@ export default function InsightsPage() {
   const fetchData = api.blend.fetchSessionData.useMutation({
     onSuccess: () => {
       setDataFetched(true);
+      fetchInitiatedRef.current = false;
+    },
+    onError: () => {
+      fetchInitiatedRef.current = false;
     },
   });
 
@@ -69,19 +80,21 @@ export default function InsightsPage() {
       session.creator &&
       session.partner &&
       !dataFetched &&
-      !fetchData.isPending
+      !fetchData.isPending &&
+      !fetchInitiatedRef.current
     ) {
       // Always fetch data if insights haven't been calculated yet
       if (
         session.compatibilityScore === null ||
         session.compatibilityScore === undefined
       ) {
+        fetchInitiatedRef.current = true;
         fetchData.mutate({ sessionId });
       } else {
         setDataFetched(true);
       }
     }
-  }, [session, dataFetched, fetchData, sessionId]);
+  }, [session, dataFetched, sessionId]);
 
   useEffect(() => {
     if (
@@ -97,7 +110,7 @@ export default function InsightsPage() {
       }, 500);
       return () => clearTimeout(timer);
     }
-  }, [dataFetched, session, calculateInsights, sessionId]);
+  }, [dataFetched, session, sessionId]);
 
   if (isLoadingSession || fetchData.isPending || calculateInsights.isPending) {
     return (

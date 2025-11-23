@@ -94,6 +94,7 @@ export const blendRouter = createTRPCRouter({
       // Fetch audio features for all tracks
       const creatorTrackIds = creatorTracks.map((t) => t.id);
       const partnerTrackIds = partnerTracks.map((t) => t.id);
+      const allTrackIds = [...new Set([...creatorTrackIds, ...partnerTrackIds])];
 
       // Batch fetch audio features (Spotify allows up to 100 at a time)
       const creatorFeatures = await fetchAudioFeatures(
