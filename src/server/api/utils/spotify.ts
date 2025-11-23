@@ -61,12 +61,15 @@ export async function getSpotifyAccessToken(userId: string): Promise<string> {
       const refreshedToken = await refreshSpotifyToken(account.refresh_token);
       
       // Update account with new token
+      // Note: Scope is preserved from original authorization - Spotify refresh doesn't return scopes
       await db.account.update({
         where: { id: account.id },
         data: {
           access_token: refreshedToken.access_token,
           expires_at: Math.floor(Date.now() / 1000) + refreshedToken.expires_in,
           refresh_token: refreshedToken.refresh_token ?? account.refresh_token,
+          // Explicitly preserve scope - it doesn't change on refresh
+          scope: account.scope,
         },
       });
 
