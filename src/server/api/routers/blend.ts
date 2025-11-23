@@ -82,28 +82,130 @@ export const blendRouter = createTRPCRouter({
 
       const timeRange = session.timeRange ?? "medium_term";
 
-      // Fetch data for both users in parallel
-      const [creatorTracks, creatorArtists, partnerTracks, partnerArtists] =
-        await Promise.all([
-          fetchUserTopTracks(session.creatorId, timeRange),
-          fetchUserTopArtists(session.creatorId, timeRange),
-          fetchUserTopTracks(session.partnerId, timeRange),
-          fetchUserTopArtists(session.partnerId, timeRange),
-        ]);
+      // Fetch data for both users in parallel with error handling per user
+      let creatorTracks: Track[] = [];
+      let creatorArtists: Artist[] = [];
+      let partnerTracks: Track[] = [];
+      let partnerArtists: Artist[] = [];
+
+      try {
+        [creatorTracks, creatorArtists, partnerTracks, partnerArtists] =
+          await Promise.all([
+            fetchUserTopTracks(session.creatorId, timeRange).catch((error) => {
+              console.error(
+                `[Blend] Failed to fetch creator (${session.creatorId}) top tracks:`,
+                error,
+              );
+              // Re-throw TRPCError as-is, wrap others
+              if (error instanceof TRPCError) {
+                throw error;
+              }
+              throw new TRPCError({
+                code: "INTERNAL_SERVER_ERROR",
+                message: `Failed to fetch creator's top tracks: ${error instanceof Error ? error.message : "Unknown error"}`,
+              });
+            }),
+            fetchUserTopArtists(session.creatorId, timeRange).catch((error) => {
+              console.error(
+                `[Blend] Failed to fetch creator (${session.creatorId}) top artists:`,
+                error,
+              );
+              if (error instanceof TRPCError) {
+                throw error;
+              }
+              throw new TRPCError({
+                code: "INTERNAL_SERVER_ERROR",
+                message: `Failed to fetch creator's top artists: ${error instanceof Error ? error.message : "Unknown error"}`,
+              });
+            }),
+            fetchUserTopTracks(session.partnerId, timeRange).catch((error) => {
+              console.error(
+                `[Blend] Failed to fetch partner (${session.partnerId}) top tracks:`,
+                error,
+              );
+              if (error instanceof TRPCError) {
+                throw error;
+              }
+              throw new TRPCError({
+                code: "INTERNAL_SERVER_ERROR",
+                message: `Failed to fetch partner's top tracks: ${error instanceof Error ? error.message : "Unknown error"}`,
+              });
+            }),
+            fetchUserTopArtists(session.partnerId, timeRange).catch((error) => {
+              console.error(
+                `[Blend] Failed to fetch partner (${session.partnerId}) top artists:`,
+                error,
+              );
+              if (error instanceof TRPCError) {
+                throw error;
+              }
+              throw new TRPCError({
+                code: "INTERNAL_SERVER_ERROR",
+                message: `Failed to fetch partner's top artists: ${error instanceof Error ? error.message : "Unknown error"}`,
+              });
+            }),
+          ]);
+      } catch (error) {
+        // Re-throw TRPCError as-is, wrap others
+        if (error instanceof TRPCError) {
+          throw error;
+        }
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: `Failed to fetch Spotify data: ${error instanceof Error ? error.message : "Unknown error"}`,
+        });
+      }
 
       // Fetch audio features for all tracks
       const creatorTrackIds = creatorTracks.map((t) => t.id);
       const partnerTrackIds = partnerTracks.map((t) => t.id);
 
       // Batch fetch audio features (Spotify allows up to 100 at a time)
-      const creatorFeatures = await fetchAudioFeatures(
-        session.creatorId,
-        creatorTrackIds,
-      );
-      const partnerFeatures = await fetchAudioFeatures(
-        session.partnerId,
-        partnerTrackIds,
-      );
+      let creatorFeatures: AudioFeatures[] = [];
+      let partnerFeatures: AudioFeatures[] = [];
+
+      try {
+        [creatorFeatures, partnerFeatures] = await Promise.all([
+          fetchAudioFeatures(session.creatorId, creatorTrackIds).catch(
+            (error) => {
+              console.error(
+                `[Blend] Failed to fetch creator (${session.creatorId}) audio features:`,
+                error,
+              );
+              if (error instanceof TRPCError) {
+                throw error;
+              }
+              throw new TRPCError({
+                code: "INTERNAL_SERVER_ERROR",
+                message: `Failed to fetch creator's audio features: ${error instanceof Error ? error.message : "Unknown error"}`,
+              });
+            },
+          ),
+          fetchAudioFeatures(session.partnerId, partnerTrackIds).catch(
+            (error) => {
+              console.error(
+                `[Blend] Failed to fetch partner (${session.partnerId}) audio features:`,
+                error,
+              );
+              if (error instanceof TRPCError) {
+                throw error;
+              }
+              throw new TRPCError({
+                code: "INTERNAL_SERVER_ERROR",
+                message: `Failed to fetch partner's audio features: ${error instanceof Error ? error.message : "Unknown error"}`,
+              });
+            },
+          ),
+        ]);
+      } catch (error) {
+        if (error instanceof TRPCError) {
+          throw error;
+        }
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: `Failed to fetch audio features: ${error instanceof Error ? error.message : "Unknown error"}`,
+        });
+      }
 
       // Store data in session (merge with existing data if any)
       const existingSession = await ctx.db.blendSession.findUnique({

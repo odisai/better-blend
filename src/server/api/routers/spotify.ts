@@ -3,7 +3,7 @@ import {
   createTRPCRouter,
   protectedProcedure,
 } from "@/server/api/trpc";
-import { spotifyApiRequest } from "../utils/spotify";
+import { spotifyApiRequest, getSpotifyScopeStatus } from "../utils/spotify";
 
 /**
  * Spotify Router
@@ -133,5 +133,14 @@ export const spotifyRouter = createTRPCRouter({
         (features): features is NonNullable<typeof features> => features !== null,
       );
     }),
+
+  /**
+   * Diagnostic endpoint to check Spotify scope status
+   * Useful for debugging 403 errors
+   */
+  checkScopeStatus: protectedProcedure.query(async ({ ctx }) => {
+    const userId = ctx.session.user.id;
+    return await getSpotifyScopeStatus(userId);
+  }),
 });
 

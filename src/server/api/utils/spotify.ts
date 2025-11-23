@@ -4,13 +4,70 @@ import { db } from "@/server/db";
 /**
  * Required Spotify scopes for the application
  */
-const REQUIRED_SCOPES = [
+export const REQUIRED_SCOPES = [
   "user-read-email",
   "user-top-read",
   "playlist-modify-public",
   "playlist-modify-private",
   "playlist-read-private",
 ];
+
+/**
+ * Validate that a user has the required scopes
+ * Throws an error if scopes are missing
+ */
+export async function validateSpotifyScopes(userId: string): Promise<void> {
+  const account = await db.account.findFirst({
+    where: {
+      userId,
+      provider: "spotify",
+    },
+    include: {
+      user: {
+        select: {
+          name: true,
+          email: true,
+        },
+      },
+    },
+  });
+
+  if (!account) {
+    throw new TRPCError({
+      code: "UNAUTHORIZED",
+      message: "Spotify account not found. Please sign in again.",
+    });
+  }
+
+  // Check if scopes are stored at all
+  if (!account.scope || account.scope.trim() === "") {
+    console.error(
+      `[Spotify] User ${userId} (${account.user?.name || account.user?.email || "unknown"}) has no scopes stored in database. This usually means they authenticated before scopes were properly configured.`,
+    );
+    throw new TRPCError({
+      code: "FORBIDDEN",
+      message:
+        "Spotify permissions are missing. Please sign out and sign in again to grant the required permissions.",
+    });
+  }
+
+  // Check if stored scopes match required scopes
+  const storedScopes = account.scope.split(" ").filter((s) => s.trim() !== "");
+  const missingScopes = REQUIRED_SCOPES.filter(
+    (scope) => !storedScopes.includes(scope),
+  );
+
+  if (missingScopes.length > 0) {
+    const userName = account.user?.name || account.user?.email || userId;
+    console.error(
+      `[Spotify] User ${userId} (${userName}) missing required scopes: ${missingScopes.join(", ")}. Stored scopes: ${account.scope}`,
+    );
+    throw new TRPCError({
+      code: "FORBIDDEN",
+      message: `Missing required Spotify permissions: ${missingScopes.join(", ")}. Please sign out and sign in again to grant all required permissions.`,
+    });
+  }
+}
 
 /**
  * Get Spotify access token for a user
@@ -31,7 +88,7 @@ export async function getSpotifyAccessToken(userId: string): Promise<string> {
     });
   }
 
-  // Check if stored scopes match required scopes
+  // Check if stored scopes match required scopes (warning only, validation happens elsewhere)
   if (account.scope) {
     const storedScopes = account.scope.split(" ");
     const missingScopes = REQUIRED_SCOPES.filter(
@@ -59,7 +116,7 @@ export async function getSpotifyAccessToken(userId: string): Promise<string> {
 
     try {
       const refreshedToken = await refreshSpotifyToken(account.refresh_token);
-      
+
       // Update account with new token
       // Note: Scope is preserved from original authorization - Spotify refresh doesn't return scopes
       await db.account.update({
@@ -97,7 +154,7 @@ export async function getSpotifyAccessToken(userId: string): Promise<string> {
  */
 async function refreshSpotifyToken(refreshToken: string) {
   const { env } = await import("@/env");
-  
+
   const response = await fetch("https://accounts.spotify.com/api/token", {
     method: "POST",
     headers: {
@@ -132,8 +189,29 @@ export async function spotifyApiRequest<T>(
   endpoint: string,
   options?: RequestInit,
 ): Promise<T> {
+  // Validate scopes before making the request
+  await validateSpotifyScopes(userId);
+
   const token = await getSpotifyAccessToken(userId);
-  
+
+  // Get user info for better error messages
+  const account = await db.account.findFirst({
+    where: {
+      userId,
+      provider: "spotify",
+    },
+    include: {
+      user: {
+        select: {
+          name: true,
+          email: true,
+        },
+      },
+    },
+  });
+
+  const userName = account?.user?.name || account?.user?.email || userId;
+
   const response = await fetch(`https://api.spotify.com/v1${endpoint}`, {
     ...options,
     headers: {
@@ -144,6 +222,9 @@ export async function spotifyApiRequest<T>(
   });
 
   if (response.status === 401) {
+    console.error(
+      `[Spotify 401] User: ${userId} (${userName}), Endpoint: ${endpoint} - Authentication expired`,
+    );
     throw new TRPCError({
       code: "UNAUTHORIZED",
       message: "Spotify authentication expired. Please sign in again.",
@@ -151,15 +232,36 @@ export async function spotifyApiRequest<T>(
   }
 
   if (response.status === 403) {
-    let errorMessage = "Spotify API access forbidden. This usually means the required permissions (scopes) are missing.";
+    let errorMessage =
+      "Spotify API access forbidden. This usually means the required permissions (scopes) are missing.";
+    let errorDetails = "";
+    let spotifyError: unknown = null;
+
     try {
-      const errorData = await response.json() as { error?: { message?: string; status?: number } };
+      const errorData = (await response.json()) as {
+        error?: { message?: string; status?: number; reason?: string };
+      };
+      spotifyError = errorData;
       if (errorData.error?.message) {
         errorMessage = `Spotify API error: ${errorData.error.message}. Please sign in again to grant the required permissions.`;
+        errorDetails = errorData.error.message;
       }
     } catch {
-      // If JSON parsing fails, use default message
+      // If JSON parsing fails, try to get text
+      try {
+        const text = await response.text();
+        errorDetails = text || "No details available";
+      } catch {
+        errorDetails = "Could not parse error response";
+      }
     }
+
+    // Log detailed error for debugging
+    console.error(
+      `[Spotify 403] User: ${userId} (${userName}), Endpoint: ${endpoint}, Details: ${errorDetails || "No details"}, Stored Scopes: ${account?.scope || "none"}, Full Error:`,
+      JSON.stringify(spotifyError, null, 2),
+    );
+
     throw new TRPCError({
       code: "FORBIDDEN",
       message: errorMessage,
@@ -185,3 +287,52 @@ export async function spotifyApiRequest<T>(
   return response.json() as Promise<T>;
 }
 
+/**
+ * Get scope status for a user (for debugging)
+ */
+export async function getSpotifyScopeStatus(userId: string): Promise<{
+  hasAccount: boolean;
+  hasScopes: boolean;
+  storedScopes: string[];
+  missingScopes: string[];
+  userName?: string;
+}> {
+  const account = await db.account.findFirst({
+    where: {
+      userId,
+      provider: "spotify",
+    },
+    include: {
+      user: {
+        select: {
+          name: true,
+          email: true,
+        },
+      },
+    },
+  });
+
+  if (!account) {
+    return {
+      hasAccount: false,
+      hasScopes: false,
+      storedScopes: [],
+      missingScopes: REQUIRED_SCOPES,
+    };
+  }
+
+  const storedScopes = account.scope
+    ? account.scope.split(" ").filter((s) => s.trim() !== "")
+    : [];
+  const missingScopes = REQUIRED_SCOPES.filter(
+    (scope) => !storedScopes.includes(scope),
+  );
+
+  return {
+    hasAccount: true,
+    hasScopes: storedScopes.length > 0,
+    storedScopes,
+    missingScopes,
+    userName: account.user?.name || account.user?.email || undefined,
+  };
+}
