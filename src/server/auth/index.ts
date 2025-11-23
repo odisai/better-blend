@@ -4,7 +4,6 @@ import { type Session } from "next-auth";
 import { getServerSession } from "next-auth/next";
 
 import { authOptions } from "./config";
-import { env } from "@/env";
 
 /**
  * Get the current session in App Router (Next.js 15+)

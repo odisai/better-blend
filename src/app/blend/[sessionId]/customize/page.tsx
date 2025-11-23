@@ -14,6 +14,8 @@ import { Slider } from "@/components/ui/slider";
 import { Music2, Loader2, ArrowRight, ArrowLeft, Sparkles } from "lucide-react";
 import { api } from "@/trpc/react";
 import Image from "next/image";
+import { Header } from "@/components/nav/Header";
+import { Breadcrumbs } from "@/components/nav/Breadcrumbs";
 
 export default function CustomizePage() {
   const params = useParams();
@@ -37,14 +39,12 @@ export default function CustomizePage() {
 
   const utils = api.useUtils();
 
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
   const updateConfig = api.session.updateConfig.useMutation({
     onSuccess: () => {
       void utils.session.get.invalidate({ id: sessionId });
     },
   });
 
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
   const generatePlaylist = api.blend.generatePlaylist.useMutation({
     onSuccess: () => {
       router.push(`/blend/${sessionId}/success`);
@@ -63,7 +63,6 @@ export default function CustomizePage() {
   }, [session]);
 
   const handleSaveConfig = () => {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
     updateConfig.mutate({
       sessionId,
       ratio,
@@ -75,38 +74,43 @@ export default function CustomizePage() {
   const handleGeneratePlaylist = () => {
     handleSaveConfig();
     setTimeout(() => {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
       generatePlaylist.mutate({ sessionId });
     }, 500);
   };
 
   if (isLoadingSession) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-[#1a1625] to-black text-white">
-        <Loader2 className="h-8 w-8 animate-spin text-[#1DB954]" />
+      <div className="min-h-screen bg-gradient-to-b from-[#1a1625] to-black text-white">
+        <Header />
+        <div className="flex min-h-[calc(100vh-80px)] items-center justify-center">
+          <Loader2 className="h-8 w-8 animate-spin text-[#1DB954]" />
+        </div>
       </div>
     );
   }
 
   if (!session) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-[#1a1625] to-black text-white">
-        <Card className="w-full max-w-md border-white/10 bg-white/5 backdrop-blur-sm">
-          <CardHeader className="text-center">
-            <CardTitle className="text-2xl">Session Not Found</CardTitle>
-            <CardDescription className="text-gray-400">
-              This blend session doesn&apos;t exist
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Button
-              onClick={() => router.push("/")}
-              className="w-full rounded-full bg-[#1DB954] text-black hover:bg-[#1ed760]"
-            >
-              Go Home
-            </Button>
-          </CardContent>
-        </Card>
+      <div className="min-h-screen bg-gradient-to-b from-[#1a1625] to-black text-white">
+        <Header />
+        <div className="flex min-h-[calc(100vh-80px)] items-center justify-center">
+          <Card className="w-full max-w-md border-white/10 bg-white/5 backdrop-blur-sm">
+            <CardHeader className="text-center">
+              <CardTitle className="text-2xl">Session Not Found</CardTitle>
+              <CardDescription className="text-gray-400">
+                This blend session doesn&apos;t exist
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button
+                onClick={() => router.push("/")}
+                className="w-full rounded-full bg-[#1DB954] text-black hover:bg-[#1ed760]"
+              >
+                Go Home
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     );
   }
@@ -125,7 +129,25 @@ export default function CustomizePage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#1a1625] to-black text-white">
+      <Header />
       <div className="container mx-auto px-4 py-8">
+        {/* Breadcrumbs */}
+        <div className="mb-4 flex items-center justify-between">
+          <Breadcrumbs
+            items={[
+              { label: "Insights", href: `/blend/${sessionId}/insights` },
+              { label: "Customize", href: `/blend/${sessionId}/customize` },
+            ]}
+          />
+          <Button
+            onClick={() => router.push(`/blend/${sessionId}/insights`)}
+            variant="ghost"
+            className="text-gray-400 hover:text-white"
+          >
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back to Insights
+          </Button>
+        </div>
         {/* Header */}
         <div className="mb-8 text-center">
           <h1 className="mb-2 text-4xl font-bold text-white">
@@ -344,11 +366,9 @@ export default function CustomizePage() {
           </Button>
           <Button
             onClick={handleGeneratePlaylist}
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
             disabled={generatePlaylist.isPending}
             className="rounded-full bg-[#1DB954] px-8 py-6 text-lg font-bold text-black hover:bg-[#1ed760]"
           >
-            {/* eslint-disable-next-line @typescript-eslint/no-unsafe-member-access */}
             {generatePlaylist.isPending ? (
               <>
                 <Loader2 className="mr-2 h-5 w-5 animate-spin" />
