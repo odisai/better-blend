@@ -33,15 +33,34 @@ declare module "next-auth" {
  */
 export const authOptions: NextAuthOptions = {
   callbacks: {
-    session: ({ session, user }) => ({
-      ...session,
-      user: {
-        ...session.user,
-        id: user.id,
-      },
-    }),
+    session: ({ session, user, token }) => {
+      // In development, return mock session if no user exists
+      if (env.NODE_ENV === "development" && !user) {
+        return {
+          ...session,
+          user: {
+            id: "dev-user-id",
+            name: "Dev User",
+            email: "dev@example.com",
+            image: null,
+          },
+          expires: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+        };
+      }
+      return {
+        ...session,
+        user: {
+          ...session.user,
+          id: user?.id ?? token?.sub ?? "unknown",
+        },
+      };
+    },
     async signIn() {
       // Allow sign-in to proceed - we'll update spotifyId after user is created by adapter
+      // In development, always allow sign-in (bypass)
+      if (env.NODE_ENV === "development") {
+        return true;
+      }
       return true;
     },
     async jwt({ token, account, user }) {
