@@ -24,14 +24,16 @@ export default function JoinPage() {
     const trimmed = input.trim();
 
     // Check if it's a full URL
-    const urlMatch = trimmed.match(/\/join\/([A-Z0-9]+)/i);
-    if (urlMatch && urlMatch[1]) {
+    const urlRegex = /\/join\/([A-Z0-9]+)/i;
+    const urlMatch = urlRegex.exec(trimmed);
+    if (urlMatch?.[1]) {
       return urlMatch[1].toUpperCase();
     }
 
     // Check if it's just a code (alphanumeric, 6 characters)
-    const codeMatch = trimmed.match(/^([A-Z0-9]{6})$/i);
-    if (codeMatch && codeMatch[1]) {
+    const codeRegex = /^([A-Z0-9]{6})$/i;
+    const codeMatch = codeRegex.exec(trimmed);
+    if (codeMatch?.[1]) {
       return codeMatch[1].toUpperCase();
     }
 
