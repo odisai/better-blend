@@ -47,7 +47,8 @@ export const sessionRouter = createTRPCRouter({
     .input(z.object({ code: z.string().min(1) }))
     .mutation(async ({ ctx, input }) => {
       const userId = ctx.session.user.id;
-      const { code } = input;
+      // Normalize code to uppercase for case-insensitive matching
+      const code = input.code.toUpperCase();
 
       // Find session by code
       const session = await ctx.db.blendSession.findUnique({
@@ -175,9 +176,12 @@ export const sessionRouter = createTRPCRouter({
         });
       }
 
+      // Normalize code to uppercase for case-insensitive matching
+      const normalizedCode = input.code?.toUpperCase();
+
       const session = await ctx.db.blendSession.findFirst({
         where: {
-          OR: [{ id: input.id }, { code: input.code }],
+          OR: [{ id: input.id }, { code: normalizedCode }],
         },
         include: {
           creator: {
@@ -207,7 +211,15 @@ export const sessionRouter = createTRPCRouter({
       }
 
       // Check if user is authorized to view this session
-      if (session.creatorId !== userId && session.partnerId !== userId) {
+      // Allow access if:
+      // 1. User is the creator or partner
+      // 2. Session is PENDING and accessed via code (for joining)
+      const isCreatorOrPartner =
+        session.creatorId === userId || session.partnerId === userId;
+      const isPendingAndAccessedByCode =
+        session.status === "PENDING" && !!normalizedCode;
+
+      if (!isCreatorOrPartner && !isPendingAndAccessedByCode) {
         throw new TRPCError({
           code: "FORBIDDEN",
           message: "You don't have access to this session",
