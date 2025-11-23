@@ -246,4 +246,53 @@ export const sessionRouter = createTRPCRouter({
         updatedAt: session.updatedAt,
       };
     }),
+
+  /**
+   * Update session configuration (ratio, timeRange, playlistLength)
+   */
+  updateConfig: protectedProcedure
+    .input(
+      z.object({
+        sessionId: z.string(),
+        ratio: z.number().min(0.3).max(0.7).optional(),
+        timeRange: z.enum(["short_term", "medium_term", "long_term"]).optional(),
+        playlistLength: z.number().min(25).max(100).optional(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const userId = ctx.session.user.id;
+      const { sessionId, ...updates } = input;
+
+      // Find session and verify user has access
+      const session = await ctx.db.blendSession.findUnique({
+        where: { id: sessionId },
+      });
+
+      if (!session) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Session not found",
+        });
+      }
+
+      if (session.creatorId !== userId && session.partnerId !== userId) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "You don't have access to this session",
+        });
+      }
+
+      // Update session configuration
+      const updatedSession = await ctx.db.blendSession.update({
+        where: { id: sessionId },
+        data: updates,
+      });
+
+      return {
+        id: updatedSession.id,
+        ratio: updatedSession.ratio,
+        timeRange: updatedSession.timeRange,
+        playlistLength: updatedSession.playlistLength,
+      };
+    }),
 });

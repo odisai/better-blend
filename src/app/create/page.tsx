@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -15,9 +15,14 @@ import { signIn, useSession } from "next-auth/react";
 
 export default function CreatePage() {
   const [copied, setCopied] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const { status } = useSession();
   const isAuthenticated = status === "authenticated";
   const isCheckingAuth = status === "loading";
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const createSession = api.session.create.useMutation({
     onSuccess: (_data) => {
@@ -68,7 +73,8 @@ export default function CreatePage() {
     }
   };
 
-  if (isCheckingAuth) {
+  // Show loading state only after component has mounted to prevent hydration mismatch
+  if (!mounted || isCheckingAuth) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-[#1a1625] to-black text-white">
         <Loader2 className="h-8 w-8 animate-spin text-[#1DB954]" />
@@ -162,8 +168,9 @@ export default function CreatePage() {
               </label>
               <div className="flex items-center gap-2">
                 <div className="flex-1 truncate rounded-lg border border-white/10 bg-white/5 px-4 py-3 text-sm">
-                  {typeof window !== "undefined" &&
-                    `${window.location.origin}${createSession.data.shareUrl}`}
+                  {mounted
+                    ? `${window.location.origin}${createSession.data.shareUrl}`
+                    : createSession.data.shareUrl}
                 </div>
                 <Button
                   onClick={handleCopyLink}

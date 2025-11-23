@@ -157,7 +157,7 @@ export default function JoinPage() {
                 )}
               </div>
               <div className="text-center">
-                <p className="text-lg font-semibold">
+                <p className="text-lg font-semibold text-white">
                   {creator?.name ?? "Anonymous"}
                 </p>
                 <p className="text-sm text-gray-400">

@@ -1,4 +1,6 @@
 import { sessionRouter } from "@/server/api/routers/session";
+import { spotifyRouter } from "@/server/api/routers/spotify";
+import { blendRouter } from "@/server/api/routers/blend";
 import { createCallerFactory, createTRPCRouter } from "@/server/api/trpc";
 
 /**
@@ -8,6 +10,8 @@ import { createCallerFactory, createTRPCRouter } from "@/server/api/trpc";
  */
 export const appRouter = createTRPCRouter({
   session: sessionRouter,
+  spotify: spotifyRouter,
+  blend: blendRouter,
 });
 
 // export type definition of API
