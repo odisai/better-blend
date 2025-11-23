@@ -654,12 +654,15 @@ async function fetchAudioFeatures(
   userId: string,
   trackIds: string[],
 ): Promise<AudioFeatures[]> {
-  if (trackIds.length === 0) return [];
+  // Filter out invalid IDs and remove duplicates
+  const validIds = [...new Set(trackIds.filter((id) => id && id.trim() !== ""))];
+
+  if (validIds.length === 0) return [];
 
   // Batch requests (Spotify allows up to 100 at a time)
   const batches: string[][] = [];
-  for (let i = 0; i < trackIds.length; i += 100) {
-    batches.push(trackIds.slice(i, i + 100));
+  for (let i = 0; i < validIds.length; i += 100) {
+    batches.push(validIds.slice(i, i + 100));
   }
 
   const allFeatures: AudioFeatures[] = [];

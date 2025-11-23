@@ -8,8 +8,6 @@ export const REQUIRED_SCOPES = [
   "user-read-email",
   "user-top-read",
   "playlist-modify-public",
-  "playlist-modify-private",
-  "playlist-read-private",
 ];
 
 /**
@@ -42,7 +40,7 @@ export async function validateSpotifyScopes(userId: string): Promise<void> {
   // Check if scopes are stored at all
   if (!account.scope || account.scope.trim() === "") {
     console.error(
-      `[Spotify] User ${userId} (${account.user?.name || account.user?.email || "unknown"}) has no scopes stored in database. This usually means they authenticated before scopes were properly configured.`,
+      `[Spotify] User ${userId} (${account.user?.name ?? account.user?.email ?? "unknown"}) has no scopes stored in database. This usually means they authenticated before scopes were properly configured.`,
     );
     throw new TRPCError({
       code: "FORBIDDEN",
@@ -58,7 +56,7 @@ export async function validateSpotifyScopes(userId: string): Promise<void> {
   );
 
   if (missingScopes.length > 0) {
-    const userName = account.user?.name || account.user?.email || userId;
+    const userName = account.user?.name ?? account.user?.email ?? userId;
     console.error(
       `[Spotify] User ${userId} (${userName}) missing required scopes: ${missingScopes.join(", ")}. Stored scopes: ${account.scope}`,
     );
@@ -210,7 +208,7 @@ export async function spotifyApiRequest<T>(
     },
   });
 
-  const userName = account?.user?.name || account?.user?.email || userId;
+  const userName = account?.user?.name ?? account?.user?.email ?? userId;
 
   const response = await fetch(`https://api.spotify.com/v1${endpoint}`, {
     ...options,
@@ -258,7 +256,7 @@ export async function spotifyApiRequest<T>(
 
     // Log detailed error for debugging
     console.error(
-      `[Spotify 403] User: ${userId} (${userName}), Endpoint: ${endpoint}, Details: ${errorDetails || "No details"}, Stored Scopes: ${account?.scope || "none"}, Full Error:`,
+      `[Spotify 403] User: ${userId} (${userName}), Endpoint: ${endpoint}, Details: ${errorDetails || "No details"}, Stored Scopes: ${account?.scope ?? "none"}, Full Error:`,
       JSON.stringify(spotifyError, null, 2),
     );
 
@@ -333,6 +331,6 @@ export async function getSpotifyScopeStatus(userId: string): Promise<{
     hasScopes: storedScopes.length > 0,
     storedScopes,
     missingScopes,
-    userName: account.user?.name || account.user?.email || undefined,
+    userName: account.user?.name ?? account.user?.email ?? undefined,
   };
 }
