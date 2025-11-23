@@ -210,79 +210,103 @@ export async function spotifyApiRequest<T>(
 
   const userName = account?.user?.name ?? account?.user?.email ?? userId;
 
-  const response = await fetch(`https://api.spotify.com/v1${endpoint}`, {
-    ...options,
-    headers: {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
-      ...options?.headers,
-    },
-  });
+  const MAX_RETRIES = 3;
 
-  if (response.status === 401) {
-    console.error(
-      `[Spotify 401] User: ${userId} (${userName}), Endpoint: ${endpoint} - Authentication expired`,
-    );
-    throw new TRPCError({
-      code: "UNAUTHORIZED",
-      message: "Spotify authentication expired. Please sign in again.",
+  for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+    const response = await fetch(`https://api.spotify.com/v1${endpoint}`, {
+      ...options,
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+        ...options?.headers,
+      },
     });
-  }
 
-  if (response.status === 403) {
-    let errorMessage =
-      "Spotify API access forbidden. This usually means the required permissions (scopes) are missing.";
-    let errorDetails = "";
-    let spotifyError: unknown = null;
+    // Handle server errors (5xx) with retry logic
+    if (response.status >= 500 && response.status < 600) {
+      console.warn(
+        `[Spotify] Server error ${response.status} on attempt ${attempt + 1}/${MAX_RETRIES}. Endpoint: ${endpoint}`,
+      );
 
-    try {
-      const errorData = (await response.json()) as {
-        error?: { message?: string; status?: number; reason?: string };
-      };
-      spotifyError = errorData;
-      if (errorData.error?.message) {
-        errorMessage = `Spotify API error: ${errorData.error.message}. Please sign in again to grant the required permissions.`;
-        errorDetails = errorData.error.message;
+      if (attempt < MAX_RETRIES - 1) {
+        // Exponential backoff: 1s, 2s, 4s
+        const delay = 1000 * Math.pow(2, attempt);
+        await new Promise((resolve) => setTimeout(resolve, delay));
+        continue;
       }
-    } catch {
-      // If JSON parsing fails, try to get text
-      try {
-        const text = await response.text();
-        errorDetails = text || "No details available";
-      } catch {
-        errorDetails = "Could not parse error response";
-      }
+      // If last attempt, fall through to standard error handling
     }
 
-    // Log detailed error for debugging
-    console.error(
-      `[Spotify 403] User: ${userId} (${userName}), Endpoint: ${endpoint}, Details: ${errorDetails || "No details"}, Stored Scopes: ${account?.scope ?? "none"}, Full Error:`,
-      JSON.stringify(spotifyError, null, 2),
-    );
+    if (response.status === 401) {
+      console.error(
+        `[Spotify 401] User: ${userId} (${userName}), Endpoint: ${endpoint} - Authentication expired`,
+      );
+      throw new TRPCError({
+        code: "UNAUTHORIZED",
+        message: "Spotify authentication expired. Please sign in again.",
+      });
+    }
 
-    throw new TRPCError({
-      code: "FORBIDDEN",
-      message: errorMessage,
-    });
+    if (response.status === 403) {
+      let errorMessage =
+        "Spotify API access forbidden. This usually means the required permissions (scopes) are missing.";
+      let errorDetails = "";
+      let spotifyError: unknown = null;
+
+      try {
+        const errorData = (await response.json()) as {
+          error?: { message?: string; status?: number; reason?: string };
+        };
+        spotifyError = errorData;
+        if (errorData.error?.message) {
+          errorMessage = `Spotify API error: ${errorData.error.message}. Please sign in again to grant the required permissions.`;
+          errorDetails = errorData.error.message;
+        }
+      } catch {
+        // If JSON parsing fails, try to get text
+        try {
+          const text = await response.text();
+          errorDetails = text || "No details available";
+        } catch {
+          errorDetails = "Could not parse error response";
+        }
+      }
+
+      // Log detailed error for debugging
+      console.error(
+        `[Spotify 403] User: ${userId} (${userName}), Endpoint: ${endpoint}, Details: ${errorDetails || "No details"}, Stored Scopes: ${account?.scope ?? "none"}, Full Error:`,
+        JSON.stringify(spotifyError, null, 2),
+      );
+
+      throw new TRPCError({
+        code: "FORBIDDEN",
+        message: errorMessage,
+      });
+    }
+
+    if (response.status === 429) {
+      const retryAfter = response.headers.get("Retry-After");
+      throw new TRPCError({
+        code: "TOO_MANY_REQUESTS",
+        message: `Rate limited. Please try again in ${retryAfter ?? "60"} seconds.`,
+      });
+    }
+
+    if (!response.ok) {
+      const error = await response.text();
+      throw new TRPCError({
+        code: "INTERNAL_SERVER_ERROR",
+        message: `Spotify API error: ${error}`,
+      });
+    }
+
+    return response.json() as Promise<T>;
   }
 
-  if (response.status === 429) {
-    const retryAfter = response.headers.get("Retry-After");
-    throw new TRPCError({
-      code: "TOO_MANY_REQUESTS",
-      message: `Rate limited. Please try again in ${retryAfter ?? "60"} seconds.`,
-    });
-  }
-
-  if (!response.ok) {
-    const error = await response.text();
-    throw new TRPCError({
-      code: "INTERNAL_SERVER_ERROR",
-      message: `Spotify API error: ${error}`,
-    });
-  }
-
-  return response.json() as Promise<T>;
+  throw new TRPCError({
+    code: "INTERNAL_SERVER_ERROR",
+    message: "Spotify API request failed after retries",
+  });
 }
 
 /**
