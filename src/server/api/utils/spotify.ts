@@ -2,6 +2,17 @@ import { TRPCError } from "@trpc/server";
 import { db } from "@/server/db";
 
 /**
+ * Required Spotify scopes for the application
+ */
+const REQUIRED_SCOPES = [
+  "user-read-email",
+  "user-top-read",
+  "playlist-modify-public",
+  "playlist-modify-private",
+  "playlist-read-private",
+];
+
+/**
  * Get Spotify access token for a user
  * Handles token refresh if needed
  */
@@ -18,6 +29,19 @@ export async function getSpotifyAccessToken(userId: string): Promise<string> {
       code: "UNAUTHORIZED",
       message: "Spotify account not found. Please sign in again.",
     });
+  }
+
+  // Check if stored scopes match required scopes
+  if (account.scope) {
+    const storedScopes = account.scope.split(" ");
+    const missingScopes = REQUIRED_SCOPES.filter(
+      (scope) => !storedScopes.includes(scope),
+    );
+    if (missingScopes.length > 0) {
+      console.warn(
+        `[Spotify] User ${userId} missing scopes: ${missingScopes.join(", ")}`,
+      );
+    }
   }
 
   // Check if token is expired (with 5 minute buffer)
@@ -120,6 +144,22 @@ export async function spotifyApiRequest<T>(
     throw new TRPCError({
       code: "UNAUTHORIZED",
       message: "Spotify authentication expired. Please sign in again.",
+    });
+  }
+
+  if (response.status === 403) {
+    let errorMessage = "Spotify API access forbidden. This usually means the required permissions (scopes) are missing.";
+    try {
+      const errorData = await response.json() as { error?: { message?: string; status?: number } };
+      if (errorData.error?.message) {
+        errorMessage = `Spotify API error: ${errorData.error.message}. Please sign in again to grant the required permissions.`;
+      }
+    } catch {
+      // If JSON parsing fails, use default message
+    }
+    throw new TRPCError({
+      code: "FORBIDDEN",
+      message: errorMessage,
     });
   }
 
