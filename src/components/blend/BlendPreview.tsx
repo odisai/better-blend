@@ -27,9 +27,9 @@ export function BlendPreview({
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="w-full rounded-2xl border border-white/20 bg-white/5 p-6 backdrop-blur-sm"
+      className="w-full rounded-2xl border border-white/20 bg-white/5 p-4 backdrop-blur-sm sm:p-6"
     >
-      <h3 className="mb-4 text-center text-lg font-bold text-white">
+      <h3 className="mb-3 text-center text-base font-bold text-white sm:mb-4 sm:text-lg">
         Your Blend Preview
       </h3>
 
@@ -55,7 +55,7 @@ export function BlendPreview({
       </div>
 
       {/* Configuration Summary */}
-      <div className="space-y-3 text-sm">
+      <div className="space-y-2 text-xs sm:space-y-3 sm:text-sm">
         <div className="flex items-center justify-between">
           <span className="text-gray-400">Blend Ratio</span>
           <span className="font-semibold text-white">

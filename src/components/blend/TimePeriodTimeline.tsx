@@ -73,7 +73,7 @@ export function TimePeriodTimeline({
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
-        className="relative h-32 w-full overflow-hidden rounded-2xl border border-white/20 bg-white/5 p-4 backdrop-blur-sm"
+        className="relative h-40 w-full overflow-hidden rounded-2xl border border-white/20 bg-white/5 p-3 backdrop-blur-sm sm:h-32 sm:p-4"
       >
         {/* Timeline Line */}
         <div className="absolute top-1/2 right-0 left-0 h-1 -translate-y-1/2 bg-white/10" />
@@ -88,7 +88,7 @@ export function TimePeriodTimeline({
               <motion.button
                 key={period.value}
                 onClick={() => onChange(period.value)}
-                className="absolute z-10 flex flex-col items-center gap-2"
+                className="absolute z-10 flex flex-col items-center gap-1 sm:gap-2"
                 style={{ left: `${position}%`, transform: "translateX(-50%)" }}
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.95 }}
@@ -98,24 +98,24 @@ export function TimePeriodTimeline({
                     scale: isActive ? 1.2 : 1,
                     y: isActive ? -5 : 0,
                   }}
-                  className={`flex h-16 w-16 items-center justify-center rounded-full border-2 transition-all ${
+                  className={`flex h-12 w-12 items-center justify-center rounded-full border-2 transition-all sm:h-16 sm:w-16 ${
                     isActive
                       ? "border-[#1DB954] bg-[#1DB954]/20"
                       : "border-white/20 bg-white/5"
                   }`}
                 >
-                  <span className="text-2xl">{period.icon}</span>
+                  <span className="text-lg sm:text-2xl">{period.icon}</span>
                 </motion.div>
                 <motion.div
                   animate={{ opacity: isActive ? 1 : 0.5 }}
                   className="text-center"
                 >
                   <div
-                    className={`text-sm font-semibold ${isActive ? "text-white" : "text-gray-400"}`}
+                    className={`text-xs font-semibold sm:text-sm ${isActive ? "text-white" : "text-gray-400"}`}
                   >
                     {period.label}
                   </div>
-                  <div className="text-xs text-gray-500">{period.desc}</div>
+                  <div className="text-[10px] text-gray-500 sm:text-xs">{period.desc}</div>
                 </motion.div>
               </motion.button>
             );

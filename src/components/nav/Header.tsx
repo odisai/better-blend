@@ -22,16 +22,16 @@ export function Header({ showDashboard = true }: HeaderProps) {
   };
 
   return (
-    <nav className="relative z-10 container mx-auto flex items-center justify-between px-6 py-6">
+    <nav className="relative z-10 container mx-auto flex items-center justify-between px-4 py-4 sm:px-6 sm:py-6">
       <Link href="/" className="flex items-center gap-2">
         <div className="flex size-8 items-center justify-center rounded-full bg-gradient-to-br from-[#1DB954] to-[#FF006E]">
           <Music2 className="size-5 text-white" />
         </div>
-        <span className="font-heading text-xl font-bold tracking-tight">
+        <span className="font-heading text-lg font-bold tracking-tight sm:text-xl">
           BetterBlend
         </span>
       </Link>
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-2 sm:gap-4">
         {isAuthenticated ? (
           <>
             {showDashboard && (

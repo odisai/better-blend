@@ -182,7 +182,7 @@ export default function SuccessPage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.2 }}
-            className="mb-4 text-5xl font-bold text-white md:text-6xl"
+            className="mb-4 text-3xl font-bold text-white sm:text-4xl md:text-5xl lg:text-6xl"
           >
             Your Blend is Ready! 🎉
           </motion.h1>
@@ -190,7 +190,7 @@ export default function SuccessPage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.3 }}
-            className="text-xl text-gray-400"
+            className="text-base text-gray-400 sm:text-lg md:text-xl"
           >
             Your playlists have been created and saved to Spotify
           </motion.p>
@@ -381,7 +381,7 @@ export default function SuccessPage() {
             onClick={handleDownloadCard}
             disabled={downloading}
             variant="outline"
-            className="rounded-full border-white/20 bg-white/5 px-8 py-6 hover:bg-white/10"
+            className="w-full rounded-full border-white/20 bg-white/5 px-6 py-6 hover:bg-white/10 sm:w-auto sm:px-8"
           >
             {downloading ? (
               <>
@@ -398,7 +398,7 @@ export default function SuccessPage() {
           <Button
             onClick={handleShare}
             variant="outline"
-            className="rounded-full border-white/20 bg-white/5 px-8 py-6 hover:bg-white/10"
+            className="w-full rounded-full border-white/20 bg-white/5 px-6 py-6 hover:bg-white/10 sm:w-auto sm:px-8"
           >
             {copied ? (
               <>
@@ -414,7 +414,7 @@ export default function SuccessPage() {
           </Button>
           <Button
             onClick={() => router.push("/create")}
-            className="rounded-full bg-[#1DB954] px-8 py-6 text-lg font-bold text-black hover:bg-[#1ed760]"
+            className="w-full rounded-full bg-[#1DB954] px-6 py-6 text-base font-bold text-black hover:bg-[#1ed760] sm:w-auto sm:px-8 sm:text-lg"
           >
             <Sparkles className="mr-2 h-5 w-5" />
             Create Another Blend

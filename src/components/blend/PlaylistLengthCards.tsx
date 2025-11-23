@@ -16,11 +16,11 @@ const lengths = [
 
 const sizeMap: Record<
   "sm" | "md" | "lg",
-  { width: string; height: string; icon: number }
+  { width: string; height: string; icon: number; widthMobile: string; heightMobile: string; iconMobile: number }
 > = {
-  sm: { width: "w-24", height: "h-24", icon: 32 },
-  md: { width: "w-32", height: "h-32", icon: 40 },
-  lg: { width: "w-40", height: "h-40", icon: 48 },
+  sm: { width: "w-24", height: "h-24", icon: 32, widthMobile: "w-16", heightMobile: "h-16", iconMobile: 24 },
+  md: { width: "w-32", height: "h-32", icon: 40, widthMobile: "w-20", heightMobile: "h-20", iconMobile: 28 },
+  lg: { width: "w-40", height: "h-40", icon: 48, widthMobile: "w-24", heightMobile: "h-24", iconMobile: 32 },
 };
 
 export function PlaylistLengthCards({
@@ -33,7 +33,7 @@ export function PlaylistLengthCards({
         Playlist Length
       </h3>
 
-      <div className="flex items-end justify-center gap-6">
+      <div className="flex items-end justify-center gap-3 sm:gap-6">
         {lengths.map((length) => {
           const isActive = length.value === value;
           const size = sizeMap[length.size];
@@ -42,7 +42,7 @@ export function PlaylistLengthCards({
             <motion.button
               key={length.value}
               onClick={() => onChange(length.value)}
-              className="flex flex-col items-center gap-3"
+              className="flex flex-col items-center gap-2 sm:gap-3"
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
             >
@@ -51,18 +51,22 @@ export function PlaylistLengthCards({
                   scale: isActive ? 1.1 : 1,
                   y: isActive ? -10 : 0,
                 }}
-                className={`${size.width} ${size.height} flex flex-col items-center justify-center rounded-2xl border-2 transition-all ${
+                className={`${size.widthMobile} ${size.heightMobile} sm:${size.width} sm:${size.height} flex flex-col items-center justify-center rounded-xl border-2 transition-all sm:rounded-2xl ${
                   isActive
                     ? "border-[#1DB954] bg-[#1DB954]/20 shadow-lg shadow-[#1DB954]/50"
                     : "border-white/20 bg-white/5 hover:border-white/40"
                 }`}
               >
                 <Music2
-                  className={`text-[#1DB954]`}
+                  className={`text-[#1DB954] sm:hidden`}
+                  style={{ width: size.iconMobile, height: size.iconMobile }}
+                />
+                <Music2
+                  className={`hidden text-[#1DB954] sm:block`}
                   style={{ width: size.icon, height: size.icon }}
                 />
                 <div
-                  className={`font-bold ${isActive ? "text-white" : "text-gray-400"}`}
+                  className={`text-xs font-bold sm:text-sm ${isActive ? "text-white" : "text-gray-400"}`}
                 >
                   {length.label}
                 </div>
@@ -72,11 +76,11 @@ export function PlaylistLengthCards({
                 className="text-center"
               >
                 <div
-                  className={`text-sm font-semibold ${isActive ? "text-white" : "text-gray-400"}`}
+                  className={`text-xs font-semibold sm:text-sm ${isActive ? "text-white" : "text-gray-400"}`}
                 >
                   {length.desc}
                 </div>
-                <div className="text-xs text-gray-500">songs</div>
+                <div className="text-[10px] text-gray-500 sm:text-xs">songs</div>
               </motion.div>
             </motion.button>
           );

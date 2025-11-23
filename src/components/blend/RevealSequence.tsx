@@ -67,14 +67,14 @@ export function RevealSequence({
           animate={{ opacity: 1, x: 0 }}
           exit={{ opacity: 0, x: -100 }}
           transition={{ duration: 0.5 }}
-          className="flex min-h-screen flex-col items-center justify-center px-4 py-12"
+          className="flex min-h-screen flex-col items-center justify-center px-4 py-12 pb-24 sm:pb-12"
         >
           {steps[currentStep]?.component}
         </motion.div>
       </AnimatePresence>
 
       {/* Progress Indicator */}
-      <div className="absolute bottom-8 left-1/2 -translate-x-1/2">
+      <div className="absolute bottom-20 left-1/2 -translate-x-1/2 px-4 sm:bottom-8">
         <div className="flex gap-2">
           {steps.map((_, index) => (
             <motion.div
@@ -97,11 +97,11 @@ export function RevealSequence({
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 1 }}
-          className="absolute bottom-8 right-8"
+          className="absolute bottom-8 left-1/2 -translate-x-1/2 px-4 sm:left-auto sm:right-8 sm:translate-x-0"
         >
           <Button
             onClick={handleNext}
-            className="rounded-full bg-[#1DB954] px-6 py-6 text-black hover:bg-[#1ed760]"
+            className="w-full rounded-full bg-[#1DB954] px-6 py-6 text-black hover:bg-[#1ed760] sm:w-auto"
           >
             {currentStep < steps.length - 1 ? (
               <>
@@ -125,7 +125,7 @@ export function RadarChartReveal({ data }: { data: Array<{ feature: string; crea
       <motion.h3
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="mb-6 text-center text-2xl font-bold text-white"
+        className="mb-4 text-center text-xl font-bold text-white sm:mb-6 sm:text-2xl"
       >
         Your Music Styles
       </motion.h3>
@@ -134,17 +134,17 @@ export function RadarChartReveal({ data }: { data: Array<{ feature: string; crea
         animate={{ opacity: 1, scale: 1 }}
         transition={{ delay: 0.3, type: "spring" }}
       >
-        <ResponsiveContainer width="100%" height={400}>
+        <ResponsiveContainer width="100%" height={300}>
           <RadarChart data={data}>
             <PolarGrid stroke="rgba(255,255,255,0.1)" />
             <PolarAngleAxis
               dataKey="feature"
-              tick={{ fill: "#fff", fontSize: 12 }}
+              tick={{ fill: "#fff", fontSize: 10 }}
             />
             <PolarRadiusAxis
               angle={90}
               domain={[0, 100]}
-              tick={{ fill: "#fff", fontSize: 10 }}
+              tick={{ fill: "#fff", fontSize: 8 }}
             />
             <Radar
               name="You"
@@ -174,20 +174,20 @@ export function PersonalityInsightsReveal({ insights }: { insights: string[] }) 
       <motion.h3
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="mb-6 text-center text-2xl font-bold text-white"
+        className="mb-4 text-center text-xl font-bold text-white sm:mb-6 sm:text-2xl"
       >
         Your Music Personality
       </motion.h3>
-      <div className="space-y-4">
+      <div className="space-y-3 sm:space-y-4">
         {insights.map((insight, index) => (
           <motion.div
             key={index}
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: index * 0.2 }}
-            className="rounded-xl border border-white/20 bg-white/5 p-4 backdrop-blur-sm"
+            className="rounded-xl border border-white/20 bg-white/5 p-3 backdrop-blur-sm sm:p-4"
           >
-            <p className="text-white">{insight}</p>
+            <p className="text-sm text-white sm:text-base">{insight}</p>
           </motion.div>
         ))}
       </div>

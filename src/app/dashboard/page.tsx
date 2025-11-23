@@ -235,14 +235,14 @@ export default function DashboardPage() {
               <span>{session.compatibilityScore}% compatibility</span>
             </div>
           )}
-          <div className="flex items-center gap-2">
+          <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
             {session.status === "PENDING" && (
               <>
                 <Button
                   onClick={() => handleCopyCode(session.code)}
                   variant="outline"
                   size="sm"
-                  className="flex-1 border-white/10 bg-white/5 hover:bg-white/10"
+                  className="w-full border-white/10 bg-white/5 hover:bg-white/10 sm:flex-1"
                 >
                   {copiedCode === session.code ? (
                     <>
@@ -260,7 +260,7 @@ export default function DashboardPage() {
                   onClick={() => handleCopyLink(session.code)}
                   variant="outline"
                   size="sm"
-                  className="flex-1 border-white/10 bg-white/5 hover:bg-white/10"
+                  className="w-full border-white/10 bg-white/5 hover:bg-white/10 sm:flex-1"
                 >
                   {copiedCode === session.code ? (
                     <>
@@ -280,7 +280,7 @@ export default function DashboardPage() {
               <Button
                 onClick={action.action}
                 variant={action.variant}
-                className="flex-1 rounded-full bg-[#1DB954] text-black hover:bg-[#1ed760]"
+                className="w-full rounded-full bg-[#1DB954] text-black hover:bg-[#1ed760] sm:flex-1"
                 size="sm"
               >
                 {action.label}
@@ -298,7 +298,7 @@ export default function DashboardPage() {
                   }}
                   variant="outline"
                   size="sm"
-                  className="border-white/10 bg-white/5 hover:bg-white/10"
+                  className="w-full border-white/10 bg-white/5 hover:bg-white/10 sm:w-auto"
                 >
                   <ExternalLink className="mr-2 h-4 w-4" />
                   Spotify
@@ -316,18 +316,18 @@ export default function DashboardPage() {
       <Header />
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
-        <div className="mb-8 flex items-center justify-between">
+        <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h1 className="mb-2 text-4xl font-bold text-white">
+            <h1 className="mb-2 text-3xl font-bold text-white sm:text-4xl">
               My Blend Sessions
             </h1>
-            <p className="text-gray-400">
+            <p className="text-sm text-gray-400 sm:text-base">
               Manage and access all your music blends
             </p>
           </div>
           <Button
             onClick={() => router.push("/create")}
-            className="rounded-full bg-[#1DB954] px-6 py-6 text-lg font-bold text-black hover:bg-[#1ed760]"
+            className="w-full rounded-full bg-[#1DB954] px-6 py-6 text-base font-bold text-black hover:bg-[#1ed760] sm:w-auto sm:text-lg"
           >
             <Music2 className="mr-2 h-5 w-5" />
             Create New Blend
@@ -362,7 +362,7 @@ export default function DashboardPage() {
                 <h2 className="mb-4 text-2xl font-semibold text-white">
                   Active Sessions
                 </h2>
-                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                <div className="grid gap-4 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
                   {activeSessions.map((session) =>
                     renderSessionCard(
                       session as typeof session & { isCreator: boolean },
@@ -378,7 +378,7 @@ export default function DashboardPage() {
                 <h2 className="mb-4 text-2xl font-semibold text-white">
                   Waiting for Partner
                 </h2>
-                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                <div className="grid gap-4 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
                   {pendingSessions.map((session) =>
                     renderSessionCard(
                       session as typeof session & { isCreator: boolean },
@@ -394,7 +394,7 @@ export default function DashboardPage() {
                 <h2 className="mb-4 text-2xl font-semibold text-white">
                   Completed Blends
                 </h2>
-                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                <div className="grid gap-4 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
                   {completedSessions.map((session) =>
                     renderSessionCard(
                       session as typeof session & { isCreator: boolean },
@@ -410,7 +410,7 @@ export default function DashboardPage() {
                 <h2 className="mb-4 text-2xl font-semibold text-white">
                   Expired Sessions
                 </h2>
-                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                <div className="grid gap-4 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
                   {expiredSessions.map((session) =>
                     renderSessionCard(
                       session as typeof session & { isCreator: boolean },

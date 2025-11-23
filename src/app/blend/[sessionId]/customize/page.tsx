@@ -138,17 +138,17 @@ export default function CustomizePage() {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="mb-12 text-center"
+          className="mb-8 text-center sm:mb-12"
         >
-          <h1 className="mb-2 text-4xl font-bold text-white md:text-5xl">
+          <h1 className="mb-2 text-3xl font-bold text-white sm:text-4xl md:text-5xl">
             Customize Your Blend
           </h1>
-          <p className="text-lg text-gray-400">
+          <p className="text-base text-gray-400 sm:text-lg">
             Mix your music tastes to create the perfect playlist
           </p>
         </motion.div>
 
-        <div className="mx-auto max-w-4xl space-y-12">
+        <div className="mx-auto max-w-4xl space-y-8 sm:space-y-12">
           {/* Blend Ratio - Drag to Blend */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -208,7 +208,7 @@ export default function CustomizePage() {
             <Button
               onClick={() => router.push(`/blend/${sessionId}/insights`)}
               variant="outline"
-              className="rounded-full border-white/10 bg-white/5 px-6 py-6 hover:bg-white/10"
+              className="w-full rounded-full border-white/10 bg-white/5 px-6 py-6 hover:bg-white/10 sm:w-auto"
             >
               <ArrowLeft className="mr-2 h-5 w-5" />
               Back to Insights
@@ -216,7 +216,7 @@ export default function CustomizePage() {
             <Button
               onClick={handleGeneratePlaylist}
               disabled={generatePlaylistMutation.isPending}
-              className="rounded-full bg-[#1DB954] px-8 py-6 text-lg font-bold text-black hover:bg-[#1ed760]"
+              className="w-full rounded-full bg-[#1DB954] px-6 py-6 text-base font-bold text-black hover:bg-[#1ed760] sm:w-auto sm:px-8 sm:text-lg"
             >
               {generatePlaylistMutation.isPending ? (
                 <>

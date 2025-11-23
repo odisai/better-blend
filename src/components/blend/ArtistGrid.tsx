@@ -23,11 +23,11 @@ export function ArtistGrid({ artists, maxDisplay = 10 }: ArtistGridProps) {
       <motion.h3
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="mb-6 text-center text-2xl font-bold text-white"
+        className="mb-4 text-center text-xl font-bold text-white sm:mb-6 sm:text-2xl"
       >
         Artists You Both Love
       </motion.h3>
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-5">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 md:grid-cols-5">
         {displayedArtists.map((artist, index) => (
           <motion.div
             key={artist.id}

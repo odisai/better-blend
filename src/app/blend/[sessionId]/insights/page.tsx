@@ -356,11 +356,11 @@ export default function InsightsPage() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: revealSteps.length * 4 + 1 }}
-          className="absolute bottom-8 left-1/2 -translate-x-1/2"
+          className="absolute bottom-8 left-1/2 -translate-x-1/2 px-4"
         >
           <Button
             onClick={() => router.push(`/blend/${sessionId}/customize`)}
-            className="rounded-full bg-[#1DB954] px-8 py-6 text-lg font-bold text-black hover:bg-[#1ed760]"
+            className="w-full rounded-full bg-[#1DB954] px-6 py-6 text-base font-bold text-black hover:bg-[#1ed760] sm:w-auto sm:px-8 sm:text-lg"
           >
             Customize Your Blend
             <ArrowRight className="ml-2 h-5 w-5" />
