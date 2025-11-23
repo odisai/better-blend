@@ -32,7 +32,7 @@ A web app enabling two Spotify users to:
 
 ### 2.1 Primary Persona
 
-**Sarah & Alex (Couple, 25-35)**
+#### Sarah & Alex (Couple, 25-35)
 
 - Active Spotify users who share music together
 
@@ -44,7 +44,7 @@ A web app enabling two Spotify users to:
 
 ### 2.2 User Flow
 
-```
+```text
 Landing → User A Login → Create Session (get code) → Share Code
                                                             ↓
 Landing → User B Login → Join Session ← Click Shared Link
@@ -66,7 +66,7 @@ Landing → User B Login → Join Session ← Click Shared Link
 
 ### 3.1 MVP Features (Must Have)
 
-**Authentication & Sessions**
+#### Authentication & Sessions
 
 - Spotify OAuth login (NextAuth.js)
 
@@ -76,7 +76,7 @@ Landing → User B Login → Join Session ← Click Shared Link
 
 - Session expires in 24 hours
 
-**Data Collection**
+#### Data Collection
 
 - Fetch top 50 tracks (3 time ranges: 4 weeks, 6 months, 1 year)
 
@@ -86,7 +86,7 @@ Landing → User B Login → Join Session ← Click Shared Link
 
 - Cache data in database for performance
 
-**Insights Dashboard**
+#### Insights Dashboard
 
 - Music compatibility score (0-100%)
 
@@ -98,7 +98,7 @@ Landing → User B Login → Join Session ← Click Shared Link
 
 - Top shared tracks list
 
-**Customization Options**
+#### Customization Options
 
 - Blend ratio slider (30/70 to 70/30)
 
@@ -108,7 +108,7 @@ Landing → User B Login → Join Session ← Click Shared Link
 
 - Live preview of configuration
 
-**Playlist Generation**
+#### Playlist Generation
 
 - Generate blended playlist using custom algorithm
 
@@ -118,7 +118,7 @@ Landing → User B Login → Join Session ← Click Shared Link
 
 - Remove duplicates automatically
 
-**Sharing**
+#### Sharing
 
 - Generate shareable stats card (image)
 
@@ -152,7 +152,7 @@ Landing → User B Login → Join Session ← Click Shared Link
 
 ### 4.1 Tech Stack Overview
 
-**Framework & Language**
+#### Framework & Language
 
 - Next.js 14 (App Router)
 
@@ -160,7 +160,7 @@ Landing → User B Login → Join Session ← Click Shared Link
 
 - React 18
 
-**T3 Stack Components**
+#### T3 Stack Components
 
 - **tRPC:** Type-safe API layer
 
@@ -170,7 +170,7 @@ Landing → User B Login → Join Session ← Click Shared Link
 
 - **TailwindCSS:** Styling framework
 
-**Additional Libraries**
+#### Additional Libraries
 
 - shadcn/ui: UI component library
 
@@ -182,7 +182,7 @@ Landing → User B Login → Join Session ← Click Shared Link
 
 - html-to-image: Stats card generation
 
-**Infrastructure**
+#### Infrastructure
 
 - Vercel: Hosting and deployment
 
@@ -192,7 +192,7 @@ Landing → User B Login → Join Session ← Click Shared Link
 
 ### 4.2 System Architecture
 
-```
+```text
 ┌─────────────────────────────────────────────────────────┐
 │                     Client (Browser)                     │
 │  ┌────────────┐  ┌────────────┐  ┌────────────────┐   │
@@ -244,7 +244,7 @@ Landing → User B Login → Join Session ← Click Shared Link
 
 ### 4.3 Database Schema Overview
 
-**Core Tables:**
+#### Core Tables
 
 **Users** (NextAuth managed)
 
@@ -276,7 +276,7 @@ Landing → User B Login → Join Session ← Click Shared Link
 
 - Calculated insights (compatibility, shared artists)
 
-**Session States:**
+#### Session States
 
 - PENDING: Waiting for partner to join
 
@@ -288,9 +288,9 @@ Landing → User B Login → Join Session ← Click Shared Link
 
 ### 4.4 API Architecture (tRPC)
 
-**Three Main Routers:**
+#### Three Main Routers
 
-**1. Session Router**
+##### 1. Session Router
 
 - `create`: Create new blend session, return code
 
@@ -300,7 +300,7 @@ Landing → User B Login → Join Session ← Click Shared Link
 
 - `updateConfig`: Update ratio/time range/length
 
-**2. Spotify Router**
+##### 2. Spotify Router
 
 - `getTopTracks`: Fetch user's top tracks
 
@@ -308,7 +308,7 @@ Landing → User B Login → Join Session ← Click Shared Link
 
 - `getAudioFeatures`: Batch fetch audio features
 
-**3. Blend Router**
+##### 3. Blend Router
 
 - `fetchSessionData`: Cache both users' Spotify data
 
@@ -318,7 +318,7 @@ Landing → User B Login → Join Session ← Click Shared Link
 
 ### 4.5 Core Algorithms
 
-**Compatibility Calculator**
+#### Compatibility Calculator
 
 - Uses Jaccard similarity on shared artists
 
@@ -326,7 +326,7 @@ Landing → User B Login → Join Session ← Click Shared Link
 
 - Outputs score 0-100%
 
-**Audio Features Comparison**
+#### Audio Features Comparison
 
 - Averages 7 audio features per user
 
@@ -334,7 +334,7 @@ Landing → User B Login → Join Session ← Click Shared Link
 
 - Generates personality insights
 
-**Blend Generator**
+#### Blend Generator
 
 - Distributes tracks by custom ratio
 
@@ -344,7 +344,7 @@ Landing → User B Login → Join Session ← Click Shared Link
 
 - Limits to specified length
 
-**Shared Artists Finder**
+#### Shared Artists Finder
 
 - Finds intersection of artist IDs
 
@@ -522,7 +522,7 @@ Landing → User B Login → Join Session ← Click Shared Link
 
 ### 8.1 Key UI Pages
 
-**Landing Page**
+#### Landing Page
 
 - Hero with value proposition
 
@@ -532,7 +532,7 @@ Landing → User B Login → Join Session ← Click Shared Link
 
 - "Create Your Blend" CTA
 
-**Create Session**
+#### Create Session
 
 - Loading animation while fetching data
 
@@ -542,7 +542,7 @@ Landing → User B Login → Join Session ← Click Shared Link
 
 - QR code for mobile sharing
 
-**Join Session**
+#### Join Session
 
 - Input code manually or auto-fill from URL
 
@@ -550,7 +550,7 @@ Landing → User B Login → Join Session ← Click Shared Link
 
 - "Join Blend" CTA
 
-**Insights Dashboard**
+#### Insights Dashboard Page
 
 - Large compatibility score (circular progress)
 
@@ -562,7 +562,7 @@ Landing → User B Login → Join Session ← Click Shared Link
 
 - "Customize Your Blend" CTA
 
-**Customize Page**
+#### Customize Page
 
 - Side-by-side user profiles
 
@@ -576,7 +576,7 @@ Landing → User B Login → Join Session ← Click Shared Link
 
 - "Generate Playlist" CTA
 
-**Success Page**
+#### Success Page
 
 - Celebration animation
 
@@ -610,7 +610,7 @@ Landing → User B Login → Join Session ← Click Shared Link
 
 ### Day 1: Build (8-10 hours)
 
-**Phase 1: Foundation (2 hours)**
+#### Phase 1: Foundation (2 hours)
 
 - Project setup with create-t3-app
 
@@ -620,7 +620,7 @@ Landing → User B Login → Join Session ← Click Shared Link
 
 - NextAuth configuration
 
-**Phase 2: Backend (3 hours)**
+#### Phase 2: Backend (3 hours)
 
 - tRPC routers implementation
 
@@ -630,7 +630,7 @@ Landing → User B Login → Join Session ← Click Shared Link
 
 - Authentication flow testing
 
-**Phase 3: Frontend (4 hours)**
+#### Phase 3: Frontend (4 hours)
 
 - Landing page and auth flows
 
@@ -642,7 +642,7 @@ Landing → User B Login → Join Session ← Click Shared Link
 
 - Success and sharing features
 
-**Phase 4: Polish (1 hour)**
+#### Phase 4: Polish (1 hour)
 
 - Responsive design fixes
 
@@ -857,4 +857,3 @@ Landing → User B Login → Join Session ← Click Shared Link
 **Next Steps:** Environment setup → Begin development
 
 **Estimated Delivery:** 1 day MVP
-
