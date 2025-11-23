@@ -39,9 +39,11 @@ export const authConfig = {
   basePath: "/api/auth",
   providers: [
     SpotifyProvider({
-      // These are required by the env schema, so they're guaranteed to be strings
-      clientId: env.SPOTIFY_CLIENT_ID as string,
-      clientSecret: env.SPOTIFY_CLIENT_SECRET as string,
+      // SPOTIFY_CLIENT_ID and SPOTIFY_CLIENT_SECRET are required by env schema (z.string())
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+      clientId: env.SPOTIFY_CLIENT_ID,
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+      clientSecret: env.SPOTIFY_CLIENT_SECRET,
       authorization: {
         params: {
           scope: [

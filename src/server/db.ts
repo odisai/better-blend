@@ -7,7 +7,6 @@ const createPrismaClient = () => {
   // DATABASE_URL is required by env schema, so it's guaranteed to be a string
   const connectionString = String(env.DATABASE_URL);
   const poolConfig: PoolConfig = { connectionString };
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
   const pool = new Pool(poolConfig);
   const adapter = new PrismaPg(pool);
 
