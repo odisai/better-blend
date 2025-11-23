@@ -2,10 +2,7 @@ import { TRPCError } from "@trpc/server";
 import { nanoid } from "nanoid";
 import { z } from "zod";
 
-import {
-  createTRPCRouter,
-  protectedProcedure,
-} from "@/server/api/trpc";
+import { createTRPCRouter, protectedProcedure } from "@/server/api/trpc";
 
 /**
  * Session Router
@@ -19,8 +16,7 @@ export const sessionRouter = createTRPCRouter({
   create: protectedProcedure.mutation(async ({ ctx }) => {
     const userId = ctx.session.user.id;
 
-    // Generate a unique code (e.g., "LOVE-ABC123")
-    const code = `LOVE-${nanoid(6).toUpperCase()}`;
+    const code = `${nanoid(6).toUpperCase()}`;
 
     // Create session with 24-hour expiration
     const expiresAt = new Date();
@@ -257,7 +253,9 @@ export const sessionRouter = createTRPCRouter({
       z.object({
         sessionId: z.string(),
         ratio: z.number().min(0.3).max(0.7).optional(),
-        timeRange: z.enum(["short_term", "medium_term", "long_term"]).optional(),
+        timeRange: z
+          .enum(["short_term", "medium_term", "long_term"])
+          .optional(),
         playlistLength: z.number().min(25).max(100).optional(),
       }),
     )

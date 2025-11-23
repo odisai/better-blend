@@ -2,7 +2,6 @@ import NextAuth from "next-auth";
 import type { NextApiRequest, NextApiResponse } from "next";
 
 import { authOptions } from "@/server/auth/config";
-import { env } from "@/env";
 
 // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 const handler = NextAuth(authOptions);
