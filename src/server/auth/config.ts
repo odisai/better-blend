@@ -1,5 +1,5 @@
-import { PrismaAdapter } from "@auth/prisma-adapter";
-import { type DefaultSession, type NextAuthConfig } from "next-auth";
+import { PrismaAdapter } from "@next-auth/prisma-adapter";
+import { type DefaultSession, type NextAuthOptions } from "next-auth";
 import SpotifyProvider from "next-auth/providers/spotify";
 
 import { db } from "@/server/db";
@@ -31,35 +31,7 @@ declare module "next-auth" {
  *
  * @see https://next-auth.js.org/configuration/options
  */
-export const authConfig = {
-  // trustHost allows NextAuth to infer the URL from request headers
-  // With trustHost: true, AUTH_URL becomes optional - NextAuth will infer it from headers
-  // This is the recommended approach for NextAuth v5 (see: https://authjs.dev/reference/nextjs#environment-variable-inference)
-  // Setting AUTH_URL explicitly is still supported but not required
-  trustHost: true,
-  // Note: basePath is not a valid NextAuth v5 option - the base path is automatically inferred
-  // from the route structure (/api/auth/[...nextauth])
-  providers: [
-    SpotifyProvider({
-      // SPOTIFY_CLIENT_ID and SPOTIFY_CLIENT_SECRET are required by env schema (z.string())
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-      clientId: env.SPOTIFY_CLIENT_ID,
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-      clientSecret: env.SPOTIFY_CLIENT_SECRET,
-      authorization: {
-        params: {
-          scope: [
-            "user-read-email",
-            "user-top-read",
-            "playlist-modify-public",
-            "playlist-modify-private",
-            "playlist-read-private",
-          ].join(" "),
-        },
-      },
-    }),
-  ],
-  adapter: PrismaAdapter(db),
+export const authOptions: NextAuthOptions = {
   callbacks: {
     session: ({ session, user }) => ({
       ...session,
@@ -79,4 +51,22 @@ export const authConfig = {
       return true;
     },
   },
-} satisfies NextAuthConfig;
+  adapter: PrismaAdapter(db),
+  providers: [
+    SpotifyProvider({
+      clientId: env.SPOTIFY_CLIENT_ID,
+      clientSecret: env.SPOTIFY_CLIENT_SECRET,
+      authorization: {
+        params: {
+          scope: [
+            "user-read-email",
+            "user-top-read",
+            "playlist-modify-public",
+            "playlist-modify-private",
+            "playlist-read-private",
+          ].join(" "),
+        },
+      },
+    }),
+  ],
+};

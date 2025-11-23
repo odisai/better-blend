@@ -1,10 +1,26 @@
-import NextAuth from "next-auth";
-import { cache } from "react";
+import "server-only";
 
-import { authConfig } from "./config";
+import { type Session } from "next-auth";
+import { getServerSession } from "next-auth/next";
 
-const { auth: uncachedAuth, handlers, signIn, signOut } = NextAuth(authConfig);
+import { authOptions } from "./config";
 
-const auth = cache(uncachedAuth);
+/**
+ * Wrapper for `getServerSession` so that you don't need to import the `authOptions` in every file.
+ *
+ * @see https://next-auth.js.org/configuration/nextjs
+ */
+export const getServerAuthSession = async (): Promise<Session | null> => {
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call
+  return await getServerSession(authOptions);
+};
 
-export { auth, handlers, signIn, signOut };
+/**
+ * Get the current session in App Router (Next.js 15+)
+ */
+export const auth = async (): Promise<Session | null> => {
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call
+  return await getServerSession(authOptions);
+};
+
+export { authOptions };
