@@ -2,74 +2,118 @@
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
 generator client {
-    provider = "prisma-client-js"
-    output   = "../generated/prisma"
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
 }
 
 datasource db {
-    provider = "postgresql"
-    // NOTE: When using mysql or sqlserver, uncomment the @db.Text annotations in model Account below
-    // Further reading:
-    // https://next-auth.js.org/adapters/prisma#create-the-prisma-schema
-    // https://www.prisma.io/docs/reference/api-reference/prisma-schema-reference#string
-    url      = env("DATABASE_URL")
+  provider = "postgresql"
 }
 
 model Post {
-    id        Int      @id @default(autoincrement())
-    name      String
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
+  id        Int      @id @default(autoincrement())
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-    createdBy   User   @relation(fields: [createdById], references: [id])
-    createdById String
+  createdBy   User   @relation(fields: [createdById], references: [id])
+  createdById String
 
-    @@index([name])
+  @@index([name])
 }
 
 // Necessary for Next auth
 model Account {
-    id                       String  @id @default(cuid())
-    userId                   String
-    type                     String
-    provider                 String
-    providerAccountId        String
-    refresh_token            String? // @db.Text
-    access_token             String? // @db.Text
-    expires_at               Int?
-    token_type               String?
-    scope                    String?
-    id_token                 String? // @db.Text
-    session_state            String?
-    user                     User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-    refresh_token_expires_in Int?
+  id                       String  @id @default(cuid())
+  userId                   String
+  type                     String
+  provider                 String
+  providerAccountId        String
+  refresh_token            String? // @db.Text
+  access_token             String? // @db.Text
+  expires_at               Int?
+  token_type               String?
+  scope                    String?
+  id_token                 String? // @db.Text
+  session_state            String?
+  user                     User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  refresh_token_expires_in Int?
 
-    @@unique([provider, providerAccountId])
+  @@unique([provider, providerAccountId])
 }
 
 model Session {
-    id           String   @id @default(cuid())
-    sessionToken String   @unique
-    userId       String
-    expires      DateTime
-    user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model User {
-    id            String    @id @default(cuid())
-    name          String?
-    email         String?   @unique
-    emailVerified DateTime?
-    image         String?
-    accounts      Account[]
-    sessions      Session[]
-    posts         Post[]
+  id            String         @id @default(cuid())
+  name          String?
+  email         String?        @unique
+  emailVerified DateTime?
+  image         String?
+  spotifyId     String?        @unique
+  accounts      Account[]
+  sessions      Session[]
+  posts         Post[]
+  createdBlends BlendSession[] @relation("Creator")
+  joinedBlends  BlendSession[] @relation("Partner")
 }
 
 model VerificationToken {
-    identifier String
-    token      String   @unique
-    expires    DateTime
+  identifier String
+  token      String   @unique
+  expires    DateTime
 
-    @@unique([identifier, token])
+  @@unique([identifier, token])
+}
+
+model BlendSession {
+  id        String   @id @default(cuid())
+  code      String   @unique
+  status    String   @default("PENDING") // PENDING, ACTIVE, GENERATED, EXPIRED
+  expiresAt DateTime
+
+  // User references
+  creatorId String
+  creator   User    @relation("Creator", fields: [creatorId], references: [id], onDelete: Cascade)
+  partnerId String?
+  partner   User?   @relation("Partner", fields: [partnerId], references: [id], onDelete: SetNull)
+
+  // Cached Spotify data (stored as JSON)
+  creatorTracks        Json? // { short_term: [...], medium_term: [...], long_term: [...] }
+  creatorArtists       Json? // { short_term: [...], medium_term: [...], long_term: [...] }
+  creatorAudioFeatures Json? // { [trackId]: {...} }
+  partnerTracks        Json?
+  partnerArtists       Json?
+  partnerAudioFeatures Json?
+
+  // Configuration
+  ratio          Float?  @default(0.5) // 0.3 to 0.7 (30/70 to 70/30)
+  timeRange      String? @default("medium_term") // short_term, medium_term, long_term
+  playlistLength Int?    @default(50) // 25, 50, 100
+
+  // Generated playlist details
+  playlistIdCreator  String?
+  playlistIdPartner  String?
+  playlistUrlCreator String?
+  playlistUrlPartner String?
+
+  // Calculated insights (cached)
+  compatibilityScore Float?
+  sharedArtists      Json? // Array of shared artist objects
+  insights           Json? // Personality insights and comparisons
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([code])
+  @@index([creatorId])
+  @@index([partnerId])
+  @@index([status])
+  @@index([expiresAt])
 }

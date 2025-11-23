@@ -8,11 +8,6 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  // NOTE: When using mysql or sqlserver, uncomment the @db.Text annotations in model Account below
-  // Further reading:
-  // https://next-auth.js.org/adapters/prisma#create-the-prisma-schema
-  // https://www.prisma.io/docs/reference/api-reference/prisma-schema-reference#string
-  url      = env("DATABASE_URL")
 }
 
 model Post {
@@ -56,14 +51,17 @@ model Session {
 }
 
 model User {
-  id            String    @id @default(cuid())
+  id            String         @id @default(cuid())
   name          String?
-  email         String?   @unique
+  email         String?        @unique
   emailVerified DateTime?
   image         String?
+  spotifyId     String?        @unique
   accounts      Account[]
   sessions      Session[]
   posts         Post[]
+  createdBlends BlendSession[] @relation("Creator")
+  joinedBlends  BlendSession[] @relation("Partner")
 }
 
 model VerificationToken {
@@ -72,4 +70,50 @@ model VerificationToken {
   expires    DateTime
 
   @@unique([identifier, token])
+}
+
+model BlendSession {
+  id        String   @id @default(cuid())
+  code      String   @unique
+  status    String   @default("PENDING") // PENDING, ACTIVE, GENERATED, EXPIRED
+  expiresAt DateTime
+
+  // User references
+  creatorId String
+  creator   User    @relation("Creator", fields: [creatorId], references: [id], onDelete: Cascade)
+  partnerId String?
+  partner   User?   @relation("Partner", fields: [partnerId], references: [id], onDelete: SetNull)
+
+  // Cached Spotify data (stored as JSON)
+  creatorTracks        Json? // { short_term: [...], medium_term: [...], long_term: [...] }
+  creatorArtists       Json? // { short_term: [...], medium_term: [...], long_term: [...] }
+  creatorAudioFeatures Json? // { [trackId]: {...} }
+  partnerTracks        Json?
+  partnerArtists       Json?
+  partnerAudioFeatures Json?
+
+  // Configuration
+  ratio          Float?  @default(0.5) // 0.3 to 0.7 (30/70 to 70/30)
+  timeRange      String? @default("medium_term") // short_term, medium_term, long_term
+  playlistLength Int?    @default(50) // 25, 50, 100
+
+  // Generated playlist details
+  playlistIdCreator  String?
+  playlistIdPartner  String?
+  playlistUrlCreator String?
+  playlistUrlPartner String?
+
+  // Calculated insights (cached)
+  compatibilityScore Float?
+  sharedArtists      Json? // Array of shared artist objects
+  insights           Json? // Personality insights and comparisons
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([code])
+  @@index([creatorId])
+  @@index([partnerId])
+  @@index([status])
+  @@index([expiresAt])
 }
