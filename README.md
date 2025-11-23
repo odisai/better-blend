@@ -44,7 +44,7 @@ This project is built with the [T3 Stack](https://create.t3.gg/):
 - **[TypeScript](https://www.typescriptlang.org/)** - Type-safe development
 - **[tRPC](https://trpc.io)** - End-to-end typesafe APIs
 - **[Prisma](https://www.prisma.io)** - Next-generation ORM
-- **[NextAuth.js](https://next-auth.js.org)** - Authentication (Spotify OAuth)
+- **[NextAuth.js v5](https://authjs.dev)** - Authentication (Spotify OAuth)
 - **[Tailwind CSS](https://tailwindcss.com)** - Utility-first CSS framework
 - **[shadcn/ui](https://ui.shadcn.com)** - Beautiful UI components
 - **[Vercel Postgres](https://vercel.com/docs/storage/vercel-postgres)** - Database
@@ -91,9 +91,9 @@ This project is built with the [T3 Stack](https://create.t3.gg/):
    DATABASE_URL="postgresql://..."
    DIRECT_URL="postgresql://..."
 
-   # NextAuth
-   NEXTAUTH_SECRET="your-secret-here" # Generate with: openssl rand -base64 32
-   NEXTAUTH_URL="http://localhost:3000"
+   # NextAuth.js v5 (uses AUTH_ prefix, not NEXTAUTH_)
+   AUTH_SECRET="your-secret-here" # Generate with: openssl rand -base64 32
+   AUTH_URL="http://localhost:3000"
 
    # Spotify OAuth
    SPOTIFY_CLIENT_ID="your-spotify-client-id"
@@ -225,8 +225,31 @@ The project uses [shadcn/ui](https://ui.shadcn.com) components with a custom des
 
 1. Push your code to GitHub
 2. Import your repository in [Vercel](https://vercel.com)
-3. Add environment variables in Vercel dashboard
-4. Deploy!
+3. **Add environment variables in Vercel dashboard** (Settings → Environment Variables):
+   
+   **Required for Production:**
+   ```env
+   AUTH_SECRET=your-secret-here  # Generate with: openssl rand -base64 32
+   AUTH_URL=https://your-app.vercel.app  # Your Vercel deployment URL
+   SPOTIFY_CLIENT_ID=your-spotify-client-id
+   SPOTIFY_CLIENT_SECRET=your-spotify-client-secret
+   DATABASE_URL=your-database-url
+   NODE_ENV=production
+   ```
+
+4. **Update Spotify Redirect URI:**
+   - Go to [Spotify Developer Dashboard](https://developer.spotify.com/dashboard)
+   - Edit your app settings
+   - Add redirect URI: `https://your-app.vercel.app/api/auth/callback/spotify`
+   - Save changes
+
+5. Deploy!
+
+**Important Notes:**
+- `AUTH_SECRET` is **required** in production - generate a secure random string
+- `AUTH_URL` must match your Vercel deployment URL exactly (including `https://`)
+- The Spotify redirect URI must match your Vercel URL + `/api/auth/callback/spotify`
+- After adding environment variables, redeploy your app for changes to take effect
 
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new).
 
