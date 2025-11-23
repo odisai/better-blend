@@ -89,16 +89,17 @@ This project is built with the [T3 Stack](https://create.t3.gg/):
    ```env
    # Database
    DATABASE_URL="postgresql://..."
-   DIRECT_URL="postgresql://..."
 
-   # NextAuth.js v5 (uses AUTH_ prefix, not NEXTAUTH_)
-   AUTH_SECRET="your-secret-here" # Generate with: openssl rand -base64 32
-   AUTH_URL="http://localhost:3000"
+   # NextAuth.js v4 (required for OAuth to work)
+   NEXTAUTH_SECRET="your-secret-here" # Generate with: openssl rand -base64 32
+   NEXTAUTH_URL="http://127.0.0.1:3000"
 
    # Spotify OAuth
    SPOTIFY_CLIENT_ID="your-spotify-client-id"
    SPOTIFY_CLIENT_SECRET="your-spotify-client-secret"
    ```
+
+   **Important:** `NEXTAUTH_SECRET` is required for OAuth authentication to work. Without it, you'll get 403 Forbidden errors.
 
 4. **Set up the database**
 
@@ -113,7 +114,7 @@ This project is built with the [T3 Stack](https://create.t3.gg/):
    pnpm dev
    ```
 
-   Open [http://localhost:3000](http://localhost:3000) in your browser.
+   Open [http://127.0.0.1:3000](http://127.0.0.1:3000) in your browser.
 
 ## 📁 Project Structure
 
@@ -210,7 +211,10 @@ The project uses [shadcn/ui](https://ui.shadcn.com) components with a custom des
 
 1. Go to [Spotify Developer Dashboard](https://developer.spotify.com/dashboard)
 2. Create a new app
-3. Add redirect URI: `http://localhost:3000/api/auth/callback/spotify`
+3. **Add redirect URI:** `http://127.0.0.1:3000/api/auth/callback/spotify`
+   - ⚠️ **Important:** Spotify no longer allows `localhost` - you must use `127.0.0.1` instead
+   - The redirect URI must match exactly (including `http://` and the port)
+   - For production, also add: `https://your-domain.com/api/auth/callback/spotify`
 4. Copy Client ID and Client Secret to `.env`
 5. Required scopes:
    - `user-read-email`
@@ -218,6 +222,33 @@ The project uses [shadcn/ui](https://ui.shadcn.com) components with a custom des
    - `playlist-modify-public`
    - `playlist-modify-private`
    - `playlist-read-private`
+
+## 🧪 Testing with Multiple Accounts
+
+To test your app with two different Spotify accounts:
+
+1. **Use different browsers** (e.g., Chrome and Firefox) - this is the easiest approach
+2. **Or use incognito/private mode** - helpful to avoid cookie conflicts
+3. **Ensure `NEXTAUTH_SECRET` is set** in your `.env` file (required for OAuth)
+4. **Verify Spotify redirect URI** matches exactly: `http://localhost:3000/api/auth/callback/spotify`
+
+### Troubleshooting OAuth Errors
+
+**403 Forbidden Error:**
+- ✅ Make sure `NEXTAUTH_SECRET` is set in your `.env` file
+- ✅ Verify the redirect URI in Spotify Dashboard matches exactly: `http://127.0.0.1:3000/api/auth/callback/spotify`
+  - ⚠️ **Spotify no longer allows `localhost`** - you must use `127.0.0.1` instead
+- ✅ Check that `NEXTAUTH_URL` is set to `http://127.0.0.1:3000` (or your actual URL)
+- ✅ Restart your dev server after changing environment variables
+
+**Spotify Rejects Redirect URI:**
+- Spotify updated their OAuth policies and no longer accept `localhost` in redirect URIs
+- Use `127.0.0.1` instead of `localhost` for local development
+- Make sure to update both your `.env` file and Spotify Developer Dashboard settings
+
+**"Jam doesn't exist" when opening link:**
+- This is expected if you're testing with different accounts - each account needs to join the session separately
+- Make sure both accounts are authenticated before trying to access the jam
 
 ## 🚢 Deployment
 
@@ -229,8 +260,8 @@ The project uses [shadcn/ui](https://ui.shadcn.com) components with a custom des
    
    **Required for Production:**
    ```env
-   AUTH_SECRET=your-secret-here  # Generate with: openssl rand -base64 32
-   AUTH_URL=https://your-app.vercel.app  # Your Vercel deployment URL
+   NEXTAUTH_SECRET=your-secret-here  # Generate with: openssl rand -base64 32
+   NEXTAUTH_URL=https://your-app.vercel.app  # Your Vercel deployment URL
    SPOTIFY_CLIENT_ID=your-spotify-client-id
    SPOTIFY_CLIENT_SECRET=your-spotify-client-secret
    DATABASE_URL=your-database-url
@@ -246,8 +277,8 @@ The project uses [shadcn/ui](https://ui.shadcn.com) components with a custom des
 5. Deploy!
 
 **Important Notes:**
-- `AUTH_SECRET` is **required** in production - generate a secure random string
-- `AUTH_URL` must match your Vercel deployment URL exactly (including `https://`)
+- `NEXTAUTH_SECRET` is **required** in production - generate a secure random string
+- `NEXTAUTH_URL` must match your Vercel deployment URL exactly (including `https://`)
 - The Spotify redirect URI must match your Vercel URL + `/api/auth/callback/spotify`
 - After adding environment variables, redeploy your app for changes to take effect
 

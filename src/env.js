@@ -13,10 +13,10 @@ export const env = createEnv({
     NEXTAUTH_SECRET: z.string().optional(),
     // NEXTAUTH_URL is the canonical URL of your site
     // In production, set this to your domain (e.g., https://example.com)
-    // In development, it defaults to http://localhost:3000
+    // In development, it defaults to http://127.0.0.1:3000 (Spotify requires 127.0.0.1, not localhost)
     NEXTAUTH_URL: z.preprocess(
       // Make the URL optional by falling back to a development URL or placeholder for build
-      (str) => str || (process.env.NODE_ENV === "development" ? "http://localhost:3000" : "http://localhost:3000"),
+      (str) => str || (process.env.NODE_ENV === "development" ? "http://127.0.0.1:3000" : "http://127.0.0.1:3000"),
       z.string().url(),
     ),
     SPOTIFY_CLIENT_ID: z.string(),
