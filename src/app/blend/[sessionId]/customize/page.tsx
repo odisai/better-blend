@@ -202,7 +202,11 @@ export default function CustomizePage() {
             </div>
             <Slider
               value={[ratio]}
-              onValueChange={([value]) => setRatio(value)}
+              onValueChange={([value]) => {
+                if (value !== undefined) {
+                  setRatio(value);
+                }
+              }}
               min={0.3}
               max={0.7}
               step={0.05}

@@ -242,6 +242,8 @@ export const sessionRouter = createTRPCRouter({
         playlistUrlCreator: session.playlistUrlCreator,
         playlistUrlPartner: session.playlistUrlPartner,
         compatibilityScore: session.compatibilityScore,
+        sharedArtists: session.sharedArtists,
+        insights: session.insights,
         createdAt: session.createdAt,
         updatedAt: session.updatedAt,
       };

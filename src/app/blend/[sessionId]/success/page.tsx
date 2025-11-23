@@ -222,6 +222,7 @@ export default function SuccessPage() {
         </div>
 
         {/* Playlist Links */}
+        {/* eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing */}
         {(session.playlistUrlCreator || session.playlistUrlPartner) && (
           <Card className="mb-8 border-white/10 bg-white/5 backdrop-blur-sm">
             <CardHeader>

@@ -4,6 +4,7 @@ import type { NextApiRequest, NextApiResponse } from "next";
 import { authOptions } from "@/server/auth/config";
 import { env } from "@/env";
 
+// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 const handler = NextAuth(authOptions);
 
 // Wrap the handler to bypass auth in development
@@ -29,5 +30,6 @@ export default async function authHandler(
     return res.status(200).json(mockSession);
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call
   return handler(req, res);
 }
