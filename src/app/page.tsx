@@ -1,10 +1,34 @@
+"use client";
+
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Play, Music2, Headphones, Users } from "lucide-react";
+import { Play, Music2, Headphones, Users, LogOut } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
+import { signIn, signOut, useSession } from "next-auth/react";
 
 export default function LandingPage() {
+  const router = useRouter();
+  const { data: session, status } = useSession();
+  const isAuthenticated = status === "authenticated";
+  const isLoading = status === "loading";
+
+  const handleSignIn = async () => {
+    await signIn("spotify", { callbackUrl: "/create" });
+  };
+
+  const handleSignOut = async () => {
+    await signOut({ callbackUrl: "/" });
+  };
+
+  const handleCreateBlend = () => {
+    if (isAuthenticated) {
+      router.push("/create");
+    } else {
+      void handleSignIn();
+    }
+  };
   return (
     <div className="min-h-screen w-full overflow-hidden bg-linear-to-b from-[#1a1625] to-black text-white selection:bg-[#1DB954] selection:text-black">
       {/* Custom Floating Animation Styles */}
@@ -64,15 +88,50 @@ export default function LandingPage() {
           </Link>
         </div>
         <div className="flex items-center gap-4">
-          <Link
-            href="#"
-            className="hidden text-sm font-medium text-gray-300 hover:text-white sm:block"
-          >
-            Log in
-          </Link>
-          <Button className="rounded-full bg-white px-6 text-black hover:bg-gray-200">
-            Get Started
-          </Button>
+          {isAuthenticated ? (
+            <>
+              <div className="hidden items-center gap-3 sm:flex">
+                {session?.user?.image && (
+                  <Image
+                    src={session.user.image}
+                    alt={session.user.name ?? "User"}
+                    width={32}
+                    height={32}
+                    className="h-8 w-8 rounded-full"
+                  />
+                )}
+                <span className="text-sm font-medium text-gray-300">
+                  {session?.user?.name ?? "User"}
+                </span>
+              </div>
+              <Button
+                onClick={handleSignOut}
+                variant="outline"
+                className="hidden rounded-full border-white/20 bg-transparent px-4 text-sm text-gray-300 hover:bg-white/10 hover:text-white sm:flex"
+              >
+                <LogOut className="mr-2 h-4 w-4" />
+                Sign out
+              </Button>
+            </>
+          ) : (
+            <>
+              <Button
+                onClick={handleSignIn}
+                variant="ghost"
+                className="hidden text-sm font-medium text-gray-300 hover:bg-white/10 hover:text-white sm:flex"
+                disabled={isLoading}
+              >
+                {isLoading ? "Loading..." : "Log in"}
+              </Button>
+              <Button
+                onClick={handleSignIn}
+                className="rounded-full bg-white px-6 text-black hover:bg-gray-200"
+                disabled={isLoading}
+              >
+                {isLoading ? "Loading..." : "Get Started"}
+              </Button>
+            </>
+          )}
         </div>
       </nav>
 
@@ -106,10 +165,16 @@ export default function LandingPage() {
             <div className="flex flex-col items-center justify-center gap-4 sm:flex-row lg:justify-start">
               <Button
                 size="lg"
+                onClick={handleCreateBlend}
                 className="h-12 min-w-[180px] rounded-full bg-[#1DB954] px-8 font-bold text-black hover:bg-[#1ed760]"
+                disabled={isLoading}
               >
                 <Play className="mr-2 h-4 w-4 fill-black" />
-                Create Your Blend
+                {isAuthenticated
+                  ? "Create Your Blend"
+                  : isLoading
+                    ? "Loading..."
+                    : "Get Started"}
               </Button>
               <Button
                 size="lg"
