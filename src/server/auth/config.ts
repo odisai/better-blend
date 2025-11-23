@@ -35,10 +35,13 @@ export const authConfig = {
   // trustHost allows NextAuth to infer the URL from request headers
   // In production, AUTH_URL should be set in Vercel env vars: https://better-blend.vercel.app
   trustHost: true,
+  // Explicitly set basePath to ensure URLs are constructed correctly
+  basePath: "/api/auth",
   providers: [
     SpotifyProvider({
-      clientId: env.SPOTIFY_CLIENT_ID,
-      clientSecret: env.SPOTIFY_CLIENT_SECRET,
+      // These are required by the env schema, so they're guaranteed to be strings
+      clientId: env.SPOTIFY_CLIENT_ID as string,
+      clientSecret: env.SPOTIFY_CLIENT_SECRET as string,
       authorization: {
         params: {
           scope: [
@@ -61,7 +64,7 @@ export const authConfig = {
         id: user.id,
       },
     }),
-    async signIn({ user, account, profile }) {
+    async signIn({ user, account }) {
       // Store Spotify ID when user signs in
       if (account?.provider === "spotify" && account.providerAccountId) {
         await db.user.update({

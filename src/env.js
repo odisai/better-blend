@@ -11,6 +11,9 @@ export const env = createEnv({
       process.env.NODE_ENV === "production"
         ? z.string()
         : z.string().optional(),
+    // AUTH_URL is used by NextAuth to construct callback URLs
+    // If not set, NextAuth will try to infer from headers (trustHost: true)
+    // Fallback logic in runtimeEnv handles Vercel deployments
     AUTH_URL: z.string().url().optional(),
     SPOTIFY_CLIENT_ID: z.string(),
     SPOTIFY_CLIENT_SECRET: z.string(),
@@ -35,7 +38,20 @@ export const env = createEnv({
    */
   runtimeEnv: {
     AUTH_SECRET: process.env.AUTH_SECRET,
-    AUTH_URL: process.env.AUTH_URL,
+    // Fallback to Vercel URL if AUTH_URL is not set
+    // NextAuth v5 reads AUTH_URL from process.env, so we set it here if missing
+    AUTH_URL: (() => {
+      const authUrl =
+        process.env.AUTH_URL ||
+        (process.env.VERCEL_URL
+          ? `https://${process.env.VERCEL_URL}`
+          : undefined);
+      // Set process.env.AUTH_URL so NextAuth v5 can read it directly
+      if (authUrl && !process.env.AUTH_URL) {
+        process.env.AUTH_URL = authUrl;
+      }
+      return authUrl;
+    })(),
     SPOTIFY_CLIENT_ID: process.env.SPOTIFY_CLIENT_ID,
     SPOTIFY_CLIENT_SECRET: process.env.SPOTIFY_CLIENT_SECRET,
     DATABASE_URL: process.env.DATABASE_URL,
