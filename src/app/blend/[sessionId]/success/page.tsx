@@ -18,10 +18,13 @@ import {
   Share2,
   Check,
   Sparkles,
+  ArrowLeft,
 } from "lucide-react";
 import { api } from "@/trpc/react";
 import Image from "next/image";
 import { toPng } from "html-to-image";
+import { Header } from "@/components/nav/Header";
+import { Breadcrumbs } from "@/components/nav/Breadcrumbs";
 
 export default function SuccessPage() {
   const params = useParams();
@@ -88,31 +91,37 @@ export default function SuccessPage() {
 
   if (isLoadingSession) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-[#1a1625] to-black text-white">
-        <Loader2 className="h-8 w-8 animate-spin text-[#1DB954]" />
+      <div className="min-h-screen bg-gradient-to-b from-[#1a1625] to-black text-white">
+        <Header />
+        <div className="flex min-h-[calc(100vh-80px)] items-center justify-center">
+          <Loader2 className="h-8 w-8 animate-spin text-[#1DB954]" />
+        </div>
       </div>
     );
   }
 
   if (!session) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-[#1a1625] to-black text-white">
-        <Card className="w-full max-w-md border-white/10 bg-white/5 backdrop-blur-sm">
-          <CardHeader className="text-center">
-            <CardTitle className="text-2xl">Session Not Found</CardTitle>
-            <CardDescription className="text-gray-400">
-              This blend session doesn&apos;t exist
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Button
-              onClick={() => router.push("/")}
-              className="w-full rounded-full bg-[#1DB954] text-black hover:bg-[#1ed760]"
-            >
-              Go Home
-            </Button>
-          </CardContent>
-        </Card>
+      <div className="min-h-screen bg-gradient-to-b from-[#1a1625] to-black text-white">
+        <Header />
+        <div className="flex min-h-[calc(100vh-80px)] items-center justify-center">
+          <Card className="w-full max-w-md border-white/10 bg-white/5 backdrop-blur-sm">
+            <CardHeader className="text-center">
+              <CardTitle className="text-2xl">Session Not Found</CardTitle>
+              <CardDescription className="text-gray-400">
+                This blend session doesn&apos;t exist
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button
+                onClick={() => router.push("/")}
+                className="w-full rounded-full bg-[#1DB954] text-black hover:bg-[#1ed760]"
+              >
+                Go Home
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     );
   }
@@ -136,13 +145,34 @@ export default function SuccessPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#1a1625] to-black text-white">
+      <Header />
       <div className="container mx-auto px-4 py-8">
+        {/* Breadcrumbs */}
+        <div className="mb-4 flex items-center justify-between">
+          <Breadcrumbs
+            items={[
+              { label: "Insights", href: `/blend/${sessionId}/insights` },
+              { label: "Customize", href: `/blend/${sessionId}/customize` },
+              { label: "Success" },
+            ]}
+          />
+          <Button
+            onClick={() => router.push("/dashboard")}
+            variant="ghost"
+            className="text-gray-400 hover:text-white"
+          >
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back to Dashboard
+          </Button>
+        </div>
         {/* Header */}
         <div className="mb-8 text-center">
           <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-[#1DB954] to-[#FF006E]">
             <Check className="h-10 w-10 text-white" />
           </div>
-          <h1 className="mb-2 text-4xl font-bold text-white">Your Blend is Ready!</h1>
+          <h1 className="mb-2 text-4xl font-bold text-white">
+            Your Blend is Ready!
+          </h1>
           <p className="text-gray-400">
             Your playlists have been created and saved to Spotify
           </p>
@@ -324,4 +354,3 @@ export default function SuccessPage() {
     </div>
   );
 }
-

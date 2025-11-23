@@ -295,4 +295,79 @@ export const sessionRouter = createTRPCRouter({
         playlistLength: updatedSession.playlistLength,
       };
     }),
+
+  /**
+   * List all sessions for the current user (created or joined)
+   * Optionally filter by status
+   */
+  listSessions: protectedProcedure
+    .input(
+      z
+        .object({
+          status: z
+            .enum(["PENDING", "ACTIVE", "GENERATED", "EXPIRED"])
+            .optional(),
+        })
+        .optional(),
+    )
+    .query(async ({ ctx, input }) => {
+      const userId = ctx.session.user.id;
+
+      // Find all sessions where user is creator or partner
+      const sessions = await ctx.db.blendSession.findMany({
+        where: {
+          OR: [{ creatorId: userId }, { partnerId: userId }],
+          ...(input?.status && { status: input.status }),
+        },
+        include: {
+          creator: {
+            select: {
+              id: true,
+              name: true,
+              image: true,
+            },
+          },
+          partner: {
+            select: {
+              id: true,
+              name: true,
+              image: true,
+            },
+          },
+        },
+        orderBy: {
+          createdAt: "desc",
+        },
+      });
+
+      // Check expiration and update status if needed
+      const now = new Date();
+      const updatedSessions = await Promise.all(
+        sessions.map(async (session) => {
+          if (now > session.expiresAt && session.status !== "EXPIRED") {
+            const updated = await ctx.db.blendSession.update({
+              where: { id: session.id },
+              data: { status: "EXPIRED" },
+            });
+            return { ...session, status: updated.status };
+          }
+          return session;
+        }),
+      );
+
+      return updatedSessions.map((session) => ({
+        id: session.id,
+        code: session.code,
+        status: session.status,
+        creator: session.creator,
+        partner: session.partner,
+        expiresAt: session.expiresAt,
+        compatibilityScore: session.compatibilityScore,
+        playlistUrlCreator: session.playlistUrlCreator,
+        playlistUrlPartner: session.playlistUrlPartner,
+        createdAt: session.createdAt,
+        updatedAt: session.updatedAt,
+        isCreator: session.creatorId === userId,
+      }));
+    }),
 });

@@ -9,10 +9,11 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Music2, Loader2, User, AlertCircle } from "lucide-react";
+import { Music2, Loader2, User, AlertCircle, ArrowLeft } from "lucide-react";
 import { api } from "@/trpc/react";
 import { signIn, useSession } from "next-auth/react";
 import Image from "next/image";
+import { Header } from "@/components/nav/Header";
 
 export default function JoinPage() {
   const router = useRouter();
@@ -57,34 +58,48 @@ export default function JoinPage() {
 
   if (isCheckingAuth || isLoadingSession) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-[#1a1625] to-black text-white">
-        <Loader2 className="h-8 w-8 animate-spin text-[#1DB954]" />
+      <div className="min-h-screen bg-gradient-to-b from-[#1a1625] to-black text-white">
+        <Header />
+        <div className="flex min-h-[calc(100vh-80px)] items-center justify-center">
+          <Loader2 className="h-8 w-8 animate-spin text-[#1DB954]" />
+        </div>
       </div>
     );
   }
 
   if (!isAuthenticated) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-[#1a1625] to-black text-white">
-        <Card className="w-full max-w-md border-white/10 bg-white/5 backdrop-blur-sm">
-          <CardHeader className="text-center">
-            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-[#1DB954] to-[#FF006E]">
-              <Music2 className="h-8 w-8 text-white" />
-            </div>
-            <CardTitle className="text-2xl">Sign in to Join</CardTitle>
-            <CardDescription className="text-gray-400">
-              Connect your Spotify account to join this blend session
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Button
-              onClick={handleJoinSession}
-              className="w-full rounded-full bg-[#1DB954] px-6 py-6 text-lg font-bold text-black hover:bg-[#1ed760]"
-            >
-              Sign in with Spotify
-            </Button>
-          </CardContent>
-        </Card>
+      <div className="min-h-screen bg-gradient-to-b from-[#1a1625] to-black text-white">
+        <Header />
+        <div className="flex min-h-[calc(100vh-80px)] items-center justify-center">
+          <Card className="w-full max-w-md border-white/10 bg-white/5 backdrop-blur-sm">
+            <CardHeader className="text-center">
+              <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-[#1DB954] to-[#FF006E]">
+                <Music2 className="h-8 w-8 text-white" />
+              </div>
+              <CardTitle className="text-2xl">Sign in to Join</CardTitle>
+              <CardDescription className="text-gray-400">
+                Connect your Spotify account to join this blend session
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <Button
+                onClick={handleJoinSession}
+                className="w-full rounded-full bg-[#1DB954] px-6 py-6 text-lg font-bold text-black hover:bg-[#1ed760]"
+              >
+                Sign in with Spotify
+              </Button>
+              <Button
+                onClick={() => router.push("/")}
+                variant="ghost"
+                className="w-full text-gray-400 hover:text-white"
+              >
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Back to Home
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     );
   }
@@ -92,27 +107,38 @@ export default function JoinPage() {
   // Show error if session not found
   if (!sessionData && !isLoadingSession) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-[#1a1625] to-black text-white">
-        <Card className="w-full max-w-md border-white/10 bg-white/5 backdrop-blur-sm">
-          <CardHeader className="text-center">
-            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-red-500/20">
-              <AlertCircle className="h-8 w-8 text-red-500" />
-            </div>
-            <CardTitle className="text-2xl">Session Not Found</CardTitle>
-            <CardDescription className="text-gray-400">
-              This blend session doesn&apos;t exist or has expired
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Button
-              onClick={() => router.push("/")}
-              variant="outline"
-              className="w-full rounded-full border-white/10 bg-white/5 hover:bg-white/10"
-            >
-              Go Home
-            </Button>
-          </CardContent>
-        </Card>
+      <div className="min-h-screen bg-gradient-to-b from-[#1a1625] to-black text-white">
+        <Header />
+        <div className="flex min-h-[calc(100vh-80px)] items-center justify-center">
+          <Card className="w-full max-w-md border-white/10 bg-white/5 backdrop-blur-sm">
+            <CardHeader className="text-center">
+              <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-red-500/20">
+                <AlertCircle className="h-8 w-8 text-red-500" />
+              </div>
+              <CardTitle className="text-2xl">Session Not Found</CardTitle>
+              <CardDescription className="text-gray-400">
+                This blend session doesn&apos;t exist or has expired
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <Button
+                onClick={() => router.push("/")}
+                variant="outline"
+                className="w-full rounded-full border-white/10 bg-white/5 hover:bg-white/10"
+              >
+                Go Home
+              </Button>
+              <Button
+                onClick={() => router.push("/dashboard")}
+                variant="ghost"
+                className="w-full text-gray-400 hover:text-white"
+              >
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                View Dashboard
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     );
   }
@@ -127,68 +153,80 @@ export default function JoinPage() {
     const creatorImage = creator?.image ?? undefined;
 
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-[#1a1625] to-black text-white">
-        <Card className="w-full max-w-md border-white/10 bg-white/5 backdrop-blur-sm">
-          <CardHeader className="text-center">
-            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-[#1DB954] to-[#FF006E]">
-              <Music2 className="h-8 w-8 text-white" />
-            </div>
-            <CardTitle className="text-2xl">Join Blend Session</CardTitle>
-            <CardDescription className="text-gray-400">
-              {creatorName} wants to blend with you!
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            {/* Creator Profile */}
-            <div className="flex flex-col items-center gap-4">
-              <div className="relative h-24 w-24 overflow-hidden rounded-full border-4 border-[#1DB954]">
-                {creatorImage ? (
-                  <Image
-                    src={creatorImage}
-                    alt={creatorName}
-                    width={96}
-                    height={96}
-                    className="h-full w-full object-cover"
-                  />
+      <div className="min-h-screen bg-gradient-to-b from-[#1a1625] to-black text-white">
+        <Header />
+        <div className="flex min-h-[calc(100vh-80px)] items-center justify-center">
+          <Card className="w-full max-w-md border-white/10 bg-white/5 backdrop-blur-sm">
+            <CardHeader className="text-center">
+              <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-[#1DB954] to-[#FF006E]">
+                <Music2 className="h-8 w-8 text-white" />
+              </div>
+              <CardTitle className="text-2xl">Join Blend Session</CardTitle>
+              <CardDescription className="text-gray-400">
+                {creatorName} wants to blend with you!
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {/* Creator Profile */}
+              <div className="flex flex-col items-center gap-4">
+                <div className="relative h-24 w-24 overflow-hidden rounded-full border-4 border-[#1DB954]">
+                  {creatorImage ? (
+                    <Image
+                      src={creatorImage}
+                      alt={creatorName}
+                      width={96}
+                      height={96}
+                      className="h-full w-full object-cover"
+                    />
+                  ) : (
+                    <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-[#1DB954] to-[#FF006E]">
+                      <User className="h-12 w-12 text-white" />
+                    </div>
+                  )}
+                </div>
+                <div className="text-center">
+                  <p className="text-lg font-semibold text-white">
+                    {creator?.name ?? "Anonymous"}
+                  </p>
+                  <p className="text-sm text-gray-400">
+                    Session Code: {sessionData.code}
+                  </p>
+                </div>
+              </div>
+
+              {/* Join Button */}
+              <Button
+                onClick={handleJoinSession}
+                className="w-full rounded-full bg-[#1DB954] px-6 py-6 text-lg font-bold text-black hover:bg-[#1ed760]"
+                disabled={joinSession.isPending}
+              >
+                {joinSession.isPending ? (
+                  <>
+                    <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                    Joining...
+                  </>
                 ) : (
-                  <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-[#1DB954] to-[#FF006E]">
-                    <User className="h-12 w-12 text-white" />
-                  </div>
+                  "Join Blend Session"
                 )}
-              </div>
-              <div className="text-center">
-                <p className="text-lg font-semibold text-white">
-                  {creator?.name ?? "Anonymous"}
-                </p>
-                <p className="text-sm text-gray-400">
-                  Session Code: {sessionData.code}
-                </p>
-              </div>
-            </div>
+              </Button>
 
-            {/* Join Button */}
-            <Button
-              onClick={handleJoinSession}
-              className="w-full rounded-full bg-[#1DB954] px-6 py-6 text-lg font-bold text-black hover:bg-[#1ed760]"
-              disabled={joinSession.isPending}
-            >
-              {joinSession.isPending ? (
-                <>
-                  <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                  Joining...
-                </>
-              ) : (
-                "Join Blend Session"
+              {joinSession.error && (
+                <div className="rounded-lg border border-red-500/20 bg-red-500/10 p-3 text-sm text-red-400">
+                  {joinSession.error.message}
+                </div>
               )}
-            </Button>
 
-            {joinSession.error && (
-              <div className="rounded-lg border border-red-500/20 bg-red-500/10 p-3 text-sm text-red-400">
-                {joinSession.error.message}
-              </div>
-            )}
-          </CardContent>
-        </Card>
+              <Button
+                onClick={() => router.push("/")}
+                variant="ghost"
+                className="w-full text-gray-400 hover:text-white"
+              >
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Back to Home
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     );
   }
@@ -203,8 +241,11 @@ export default function JoinPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-[#1a1625] to-black text-white">
-      <Loader2 className="h-8 w-8 animate-spin text-[#1DB954]" />
+    <div className="min-h-screen bg-gradient-to-b from-[#1a1625] to-black text-white">
+      <Header />
+      <div className="flex min-h-[calc(100vh-80px)] items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-[#1DB954]" />
+      </div>
     </div>
   );
 }

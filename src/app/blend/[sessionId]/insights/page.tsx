@@ -18,6 +18,7 @@ import {
   TrendingUp,
   ArrowRight,
   Sparkles,
+  ArrowLeft,
 } from "lucide-react";
 import { api } from "@/trpc/react";
 import Image from "next/image";
@@ -29,6 +30,8 @@ import {
   PolarRadiusAxis,
   ResponsiveContainer,
 } from "recharts";
+import { Header } from "@/components/nav/Header";
+import { Breadcrumbs } from "@/components/nav/Breadcrumbs";
 
 export default function InsightsPage() {
   const params = useParams();
@@ -47,14 +50,12 @@ export default function InsightsPage() {
 
   const utils = api.useUtils();
 
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
   const fetchData = api.blend.fetchSessionData.useMutation({
     onSuccess: () => {
       setDataFetched(true);
     },
   });
 
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
   const calculateInsights = api.blend.calculateInsights.useMutation({
     onSuccess: () => {
       // Refetch session to get updated insights
@@ -68,7 +69,6 @@ export default function InsightsPage() {
       session.creator &&
       session.partner &&
       !dataFetched &&
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       !fetchData.isPending
     ) {
       // Always fetch data if insights haven't been calculated yet
@@ -76,7 +76,6 @@ export default function InsightsPage() {
         session.compatibilityScore === null ||
         session.compatibilityScore === undefined
       ) {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
         fetchData.mutate({ sessionId });
       } else {
         setDataFetched(true);
@@ -88,61 +87,62 @@ export default function InsightsPage() {
     if (
       dataFetched &&
       session?.status === "ACTIVE" &&
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       !calculateInsights.isPending &&
       (session.compatibilityScore === null ||
         session.compatibilityScore === undefined)
     ) {
       // Small delay to ensure data is saved
       const timer = setTimeout(() => {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
         calculateInsights.mutate({ sessionId });
       }, 500);
       return () => clearTimeout(timer);
     }
   }, [dataFetched, session, calculateInsights, sessionId]);
 
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
   if (isLoadingSession || fetchData.isPending || calculateInsights.isPending) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-[#1a1625] to-black text-white">
-        <Card className="w-full max-w-md border-white/10 bg-white/5 backdrop-blur-sm">
-          <CardContent className="flex flex-col items-center justify-center py-12">
-            <Loader2 className="mb-4 h-12 w-12 animate-spin text-[#1DB954]" />
-            <p className="text-lg text-gray-300">
-              {/* eslint-disable-next-line @typescript-eslint/no-unsafe-member-access */}
-              {fetchData.isPending
-                ? "Fetching your music data..."
-                : // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-                  calculateInsights.isPending
-                  ? "Calculating insights..."
-                  : "Loading..."}
-            </p>
-          </CardContent>
-        </Card>
+      <div className="min-h-screen bg-gradient-to-b from-[#1a1625] to-black text-white">
+        <Header />
+        <div className="flex min-h-[calc(100vh-80px)] items-center justify-center">
+          <Card className="w-full max-w-md border-white/10 bg-white/5 backdrop-blur-sm">
+            <CardContent className="flex flex-col items-center justify-center py-12">
+              <Loader2 className="mb-4 h-12 w-12 animate-spin text-[#1DB954]" />
+              <p className="text-lg text-gray-300">
+                {fetchData.isPending
+                  ? "Fetching your music data..."
+                  : calculateInsights.isPending
+                    ? "Calculating insights..."
+                    : "Loading..."}
+              </p>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     );
   }
 
   if (!session) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-[#1a1625] to-black text-white">
-        <Card className="w-full max-w-md border-white/10 bg-white/5 backdrop-blur-sm">
-          <CardHeader className="text-center">
-            <CardTitle className="text-2xl">Session Not Found</CardTitle>
-            <CardDescription className="text-gray-400">
-              This blend session doesn&apos;t exist
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Button
-              onClick={() => router.push("/")}
-              className="w-full rounded-full bg-[#1DB954] text-black hover:bg-[#1ed760]"
-            >
-              Go Home
-            </Button>
-          </CardContent>
-        </Card>
+      <div className="min-h-screen bg-gradient-to-b from-[#1a1625] to-black text-white">
+        <Header />
+        <div className="flex min-h-[calc(100vh-80px)] items-center justify-center">
+          <Card className="w-full max-w-md border-white/10 bg-white/5 backdrop-blur-sm">
+            <CardHeader className="text-center">
+              <CardTitle className="text-2xl">Session Not Found</CardTitle>
+              <CardDescription className="text-gray-400">
+                This blend session doesn&apos;t exist
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button
+                onClick={() => router.push("/")}
+                className="w-full rounded-full bg-[#1DB954] text-black hover:bg-[#1ed760]"
+              >
+                Go Home
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     );
   }
@@ -242,7 +242,24 @@ export default function InsightsPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#1a1625] to-black text-white">
+      <Header />
       <div className="container mx-auto px-4 py-8">
+        {/* Breadcrumbs */}
+        <div className="mb-4 flex items-center justify-between">
+          <Breadcrumbs
+            items={[
+              { label: "Insights", href: `/blend/${sessionId}/insights` },
+            ]}
+          />
+          <Button
+            onClick={() => router.push("/dashboard")}
+            variant="ghost"
+            className="text-gray-400 hover:text-white"
+          >
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back to Dashboard
+          </Button>
+        </div>
         {/* Header */}
         <div className="mb-8 text-center">
           <h1 className="mb-2 text-4xl font-bold text-white">
