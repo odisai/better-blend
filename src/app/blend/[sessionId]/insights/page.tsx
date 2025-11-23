@@ -25,12 +25,14 @@ export default function InsightsPage() {
   const [dataFetched, setDataFetched] = useState(false);
   const [showReveal, setShowReveal] = useState(false);
   const fetchInitiatedRef = useRef(false);
+  const [fetchError, setFetchError] = useState<string | null>(null);
 
   // Reset ref when sessionId changes
   useEffect(() => {
     fetchInitiatedRef.current = false;
     setDataFetched(false);
     setShowReveal(false);
+    setFetchError(null);
   }, [sessionId]);
 
   const { data: session, isLoading: isLoadingSession } =
@@ -48,9 +50,12 @@ export default function InsightsPage() {
     onSuccess: () => {
       setDataFetched(true);
       fetchInitiatedRef.current = false;
+      setFetchError(null);
     },
-    onError: () => {
+    onError: (error) => {
       fetchInitiatedRef.current = false;
+      setFetchError(error.message);
+      // Don't reset dataFetched to prevent infinite retries
     },
   });
 
@@ -72,7 +77,8 @@ export default function InsightsPage() {
       session.partner &&
       !dataFetched &&
       !fetchData.isPending &&
-      !fetchInitiatedRef.current
+      !fetchInitiatedRef.current &&
+      !fetchError // Don't retry if there's an error
     ) {
       // Always fetch data if insights haven't been calculated yet
       if (
@@ -86,7 +92,7 @@ export default function InsightsPage() {
         setShowReveal(true);
       }
     }
-  }, [session, dataFetched, sessionId, fetchData]);
+  }, [session, dataFetched, sessionId, fetchData.isPending, fetchError]);
 
   useEffect(() => {
     if (
@@ -102,7 +108,7 @@ export default function InsightsPage() {
       }, 500);
       return () => clearTimeout(timer);
     }
-  }, [dataFetched, session, sessionId, calculateInsights]);
+  }, [dataFetched, session, sessionId, calculateInsights.isPending]);
 
   if (isLoadingSession || fetchData.isPending || calculateInsights.isPending) {
     return (
@@ -120,6 +126,30 @@ export default function InsightsPage() {
             }
             size="lg"
           />
+        </div>
+      </div>
+    );
+  }
+
+  // Show error state if fetch failed
+  if (fetchError) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-[#1a1625] to-black text-white">
+        <GradientBackground />
+        <Header />
+        <div className="flex min-h-[calc(100vh-80px)] items-center justify-center px-4">
+          <div className="w-full max-w-md text-center">
+            <h1 className="mb-4 text-2xl font-bold text-white">
+              Failed to Load Data
+            </h1>
+            <p className="mb-8 text-gray-400">{fetchError}</p>
+            <Button
+              onClick={() => router.push("/dashboard")}
+              className="rounded-full bg-[#1DB954] text-black hover:bg-[#1ed760]"
+            >
+              Go to Dashboard
+            </Button>
+          </div>
         </div>
       </div>
     );
