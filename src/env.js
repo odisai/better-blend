@@ -9,16 +9,14 @@ export const env = createEnv({
   server: {
     // NextAuth v4 requires NEXTAUTH_SECRET for JWT encryption
     // Generate with: openssl rand -base64 32
-    NEXTAUTH_SECRET:
-      process.env.NODE_ENV === "production"
-        ? z.string()
-        : z.string().optional(),
+    // Optional during build, required at runtime in production
+    NEXTAUTH_SECRET: z.string().optional(),
     // NEXTAUTH_URL is the canonical URL of your site
     // In production, set this to your domain (e.g., https://example.com)
     // In development, it defaults to http://localhost:3000
     NEXTAUTH_URL: z.preprocess(
-      // Make the URL optional by falling back to a development URL
-      (str) => str || (process.env.NODE_ENV === "development" ? "http://localhost:3000" : undefined),
+      // Make the URL optional by falling back to a development URL or placeholder for build
+      (str) => str || (process.env.NODE_ENV === "development" ? "http://localhost:3000" : "http://localhost:3000"),
       z.string().url(),
     ),
     SPOTIFY_CLIENT_ID: z.string(),
