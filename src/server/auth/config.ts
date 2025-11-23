@@ -40,15 +40,26 @@ export const authOptions: NextAuthOptions = {
         id: user.id,
       },
     }),
-    async signIn({ user, account }) {
-      // Store Spotify ID when user signs in
-      if (account?.provider === "spotify" && account.providerAccountId) {
-        await db.user.update({
-          where: { id: user.id },
-          data: { spotifyId: account.providerAccountId },
-        });
-      }
+    async signIn() {
+      // Allow sign-in to proceed - we'll update spotifyId after user is created by adapter
       return true;
+    },
+    async jwt({ token, account, user }) {
+      // Update Spotify ID after user is created by adapter
+      // This only runs on sign-in when both account and user are available
+      if (account?.provider === "spotify" && account.providerAccountId && user?.id) {
+        try {
+          await db.user.update({
+            where: { id: user.id },
+            data: { spotifyId: account.providerAccountId },
+          });
+        } catch (error) {
+          // User might not exist yet - this should be rare but we handle it gracefully
+          // The adapter should have created the user by this point
+          console.error("Failed to update spotifyId:", error);
+        }
+      }
+      return token;
     },
   },
   adapter: PrismaAdapter(db),
