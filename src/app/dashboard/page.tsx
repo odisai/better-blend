@@ -27,6 +27,7 @@ import { signIn, useSession } from "next-auth/react";
 import Image from "next/image";
 import { useState } from "react";
 import { Header } from "@/components/nav/Header";
+import { GradientBackground } from "@/components/GradientBackground";
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -145,6 +146,7 @@ export default function DashboardPage() {
   if (isCheckingAuth) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-[#1a1625] to-black text-white">
+        <GradientBackground />
         <Header showDashboard={false} />
         <div className="flex min-h-[calc(100vh-80px)] items-center justify-center">
           <Loader2 className="h-8 w-8 animate-spin text-[#1DB954]" />
@@ -156,40 +158,38 @@ export default function DashboardPage() {
   if (!isAuthenticated) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-[#1a1625] to-black text-white">
+        <GradientBackground />
         <Header showDashboard={false} />
         <div className="flex min-h-[calc(100vh-80px)] items-center justify-center">
           <Card className="w-full max-w-md border-white/10 bg-white/5 backdrop-blur-sm">
-          <CardHeader className="text-center">
-            <CardTitle className="text-2xl">Sign in Required</CardTitle>
-            <CardDescription className="text-gray-400">
-              Please sign in to view your blend sessions
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Button
-              onClick={() => signIn("spotify", { callbackUrl: "/dashboard" })}
-              className="w-full rounded-full bg-[#1DB954] text-black hover:bg-[#1ed760]"
-            >
-              Sign in with Spotify
-            </Button>
-          </CardContent>
-        </Card>
+            <CardHeader className="text-center">
+              <CardTitle className="text-2xl">Sign in Required</CardTitle>
+              <CardDescription className="text-gray-400">
+                Please sign in to view your blend sessions
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button
+                onClick={() => signIn("spotify", { callbackUrl: "/dashboard" })}
+                className="w-full rounded-full bg-[#1DB954] text-black hover:bg-[#1ed760]"
+              >
+                Sign in with Spotify
+              </Button>
+            </CardContent>
+          </Card>
         </div>
       </div>
     );
   }
 
   // Group sessions by status
-  const pendingSessions =
-    sessions?.filter((s) => s.status === "PENDING") ?? [];
+  const pendingSessions = sessions?.filter((s) => s.status === "PENDING") ?? [];
   const activeSessions = sessions?.filter((s) => s.status === "ACTIVE") ?? [];
   const completedSessions =
     sessions?.filter((s) => s.status === "GENERATED") ?? [];
   const expiredSessions = sessions?.filter((s) => s.status === "EXPIRED") ?? [];
 
-  const renderSessionCard = (
-    session: NonNullable<typeof sessions>[number],
-  ) => {
+  const renderSessionCard = (session: NonNullable<typeof sessions>[number]) => {
     const otherUser = session.isCreator ? session.partner : session.creator;
     const action = getSessionAction(session);
 
@@ -203,9 +203,9 @@ export default function DashboardPage() {
             <div className="flex-1">
               <div className="mb-2 flex items-center gap-2">
                 <CardTitle className="text-lg">
-                  {session.isCreator ? "You" : otherUser?.name ?? "You"} &{" "}
+                  {session.isCreator ? "You" : (otherUser?.name ?? "You")} &{" "}
                   {session.isCreator
-                    ? otherUser?.name ?? "Partner"
+                    ? (otherUser?.name ?? "Partner")
                     : "Creator"}
                 </CardTitle>
                 {getStatusBadge(session.status)}
@@ -232,9 +232,7 @@ export default function DashboardPage() {
           {session.compatibilityScore !== null && (
             <div className="flex items-center gap-2 text-sm text-gray-300">
               <Music2 className="h-4 w-4 text-[#1DB954]" />
-              <span>
-                {session.compatibilityScore}% compatibility
-              </span>
+              <span>{session.compatibilityScore}% compatibility</span>
             </div>
           )}
           <div className="flex items-center gap-2">
@@ -314,6 +312,7 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#1a1625] to-black text-white">
+      <GradientBackground />
       <Header />
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
@@ -365,7 +364,9 @@ export default function DashboardPage() {
                 </h2>
                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                   {activeSessions.map((session) =>
-                    renderSessionCard(session as typeof session & { isCreator: boolean }),
+                    renderSessionCard(
+                      session as typeof session & { isCreator: boolean },
+                    ),
                   )}
                 </div>
               </div>
@@ -379,7 +380,9 @@ export default function DashboardPage() {
                 </h2>
                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                   {pendingSessions.map((session) =>
-                    renderSessionCard(session as typeof session & { isCreator: boolean }),
+                    renderSessionCard(
+                      session as typeof session & { isCreator: boolean },
+                    ),
                   )}
                 </div>
               </div>
@@ -393,7 +396,9 @@ export default function DashboardPage() {
                 </h2>
                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                   {completedSessions.map((session) =>
-                    renderSessionCard(session as typeof session & { isCreator: boolean }),
+                    renderSessionCard(
+                      session as typeof session & { isCreator: boolean },
+                    ),
                   )}
                 </div>
               </div>
@@ -407,7 +412,9 @@ export default function DashboardPage() {
                 </h2>
                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                   {expiredSessions.map((session) =>
-                    renderSessionCard(session as typeof session & { isCreator: boolean }),
+                    renderSessionCard(
+                      session as typeof session & { isCreator: boolean },
+                    ),
                   )}
                 </div>
               </div>
@@ -418,4 +425,3 @@ export default function DashboardPage() {
     </div>
   );
 }
-

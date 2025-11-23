@@ -1,49 +1,41 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import {
-  Music2,
-  Copy,
-  Check,
-  Loader2,
-  LayoutDashboard,
-  ArrowRight,
-} from "lucide-react";
-import { api } from "@/trpc/react";
+import { Music2, Loader2, ArrowRight, Users } from "lucide-react";
+import { api, type RouterOutputs } from "@/trpc/react";
 import { signIn, useSession } from "next-auth/react";
 import { Header } from "@/components/nav/Header";
-import { useRouter } from "next/navigation";
+import { InvitationFlow } from "@/components/blend/InvitationFlow";
+import { GradientBackground } from "@/components/GradientBackground";
+import Image from "next/image";
 
 export default function CreatePage() {
-  const router = useRouter();
-  const [copied, setCopied] = useState(false);
   const [mounted, setMounted] = useState(false);
   const { status } = useSession();
   const isAuthenticated = status === "authenticated";
   const isCheckingAuth = status === "loading";
 
-  // Fetch user's sessions to show active ones
-  const { data: sessions } = api.session.listSessions.useQuery(
-    { status: "PENDING" },
-    {
-      enabled: isAuthenticated,
-    },
-  );
+  // Fetch user's top tracks for floating album art
+  const { data: topTracks } = api.spotify.getTopTracks.useQuery(
+    { timeRange: "medium_term", limit: 20 },
+    { enabled: isAuthenticated },
+  ) as { data: RouterOutputs["spotify"]["getTopTracks"] | undefined };
+
+  // Extract album art from tracks
+  const albums =
+    topTracks?.map((track) => ({
+      id: track.album.id,
+      image: track.album.image,
+    })) ?? [];
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
   const createSession = api.session.create.useMutation({
-    onSuccess: (_data) => {
+    onSuccess: () => {
       // Session created successfully
     },
     onError: (error) => {
@@ -60,41 +52,11 @@ export default function CreatePage() {
     createSession.mutate();
   };
 
-  const handleCopyCode = async () => {
-    if (!createSession.data) return;
-    const code = (createSession.data as { code: string }).code;
-    if (typeof code === "string") {
-      try {
-        await navigator.clipboard.writeText(code);
-        setCopied(true);
-        setTimeout(() => setCopied(false), 2000);
-      } catch (err) {
-        const error = err instanceof Error ? err : new Error(String(err));
-        console.error("Failed to copy code:", error);
-      }
-    }
-  };
-
-  const handleCopyLink = async () => {
-    if (!createSession.data) return;
-    const shareUrl = (createSession.data as { shareUrl: string }).shareUrl;
-    if (typeof shareUrl === "string") {
-      try {
-        const fullUrl = `${window.location.origin}${shareUrl}`;
-        await navigator.clipboard.writeText(fullUrl);
-        setCopied(true);
-        setTimeout(() => setCopied(false), 2000);
-      } catch (err) {
-        const error = err instanceof Error ? err : new Error(String(err));
-        console.error("Failed to copy link:", error);
-      }
-    }
-  };
-
   // Show loading state only after component has mounted to prevent hydration mismatch
   if (!mounted || isCheckingAuth) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-[#1a1625] to-black text-white">
+        <GradientBackground />
         <Header />
         <div className="flex min-h-[calc(100vh-80px)] items-center justify-center">
           <Loader2 className="h-8 w-8 animate-spin text-[#1DB954]" />
@@ -103,237 +65,194 @@ export default function CreatePage() {
     );
   }
 
+  // Show invitation flow if session is created
+  if (createSession.data) {
+    const sessionData = createSession.data as {
+      code: string;
+      shareUrl: string;
+    };
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-[#1a1625] to-black text-white">
+        <GradientBackground />
+        <Header />
+        <InvitationFlow
+          code={sessionData.code}
+          shareUrl={sessionData.shareUrl}
+          albums={albums}
+        />
+      </div>
+    );
+  }
+
+  // Not authenticated - show sign in
   if (!isAuthenticated) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-[#1a1625] to-black text-white">
+        <GradientBackground />
         <Header />
-        <div className="flex min-h-[calc(100vh-80px)] items-center justify-center">
-          <Card className="w-full max-w-md border-white/10 bg-white/5 backdrop-blur-sm">
-            <CardHeader className="text-center">
-              <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-[#1DB954] to-[#FF006E]">
-                <Music2 className="h-8 w-8 text-white" />
-              </div>
-              <CardTitle className="text-2xl">Sign in to Spotify</CardTitle>
-              <CardDescription className="text-gray-400">
-                Connect your Spotify account to create a blend session
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Button
-                onClick={handleCreateSession}
-                className="w-full rounded-full bg-[#1DB954] px-6 py-6 text-lg font-bold text-black hover:bg-[#1ed760]"
-              >
-                Sign in with Spotify
-              </Button>
-            </CardContent>
-          </Card>
+        <div className="flex min-h-[calc(100vh-80px)] items-center justify-center px-4">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="w-full max-w-md text-center"
+          >
+            <motion.div
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ type: "spring", duration: 0.6 }}
+              className="mx-auto mb-8 flex h-24 w-24 items-center justify-center rounded-full bg-gradient-to-br from-[#1DB954] to-[#FF006E]"
+            >
+              <Music2 className="h-12 w-12 text-white" />
+            </motion.div>
+            <h1 className="mb-4 text-4xl font-bold text-white md:text-5xl">
+              Create Your Blend
+            </h1>
+            <p className="mb-8 text-lg text-gray-400">
+              Connect your Spotify account to start blending music with your
+              partner
+            </p>
+            <Button
+              onClick={handleCreateSession}
+              className="rounded-full bg-[#1DB954] px-8 py-6 text-lg font-bold text-black hover:bg-[#1ed760]"
+            >
+              Sign in with Spotify
+            </Button>
+          </motion.div>
         </div>
       </div>
     );
   }
 
-  if (createSession.isPending) {
-    return (
-      <div className="min-h-screen bg-gradient-to-b from-[#1a1625] to-black text-white">
-        <Header />
-        <div className="flex min-h-[calc(100vh-80px)] items-center justify-center">
-          <Card className="w-full max-w-md border-white/10 bg-white/5 backdrop-blur-sm">
-            <CardContent className="flex flex-col items-center justify-center py-12">
-              <Loader2 className="mb-4 h-12 w-12 animate-spin text-[#1DB954]" />
-              <p className="text-lg text-gray-300">
-                Creating your blend session...
-              </p>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-    );
-  }
-
-  if (createSession.data) {
-    return (
-      <div className="min-h-screen bg-gradient-to-b from-[#1a1625] to-black text-white">
-        <Header />
-        <div className="flex min-h-[calc(100vh-80px)] items-center justify-center">
-          <Card className="w-full max-w-md border-white/10 bg-white/5 backdrop-blur-sm">
-            <CardHeader className="text-center">
-              <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-[#1DB954] to-[#FF006E]">
-                <Music2 className="h-8 w-8 text-white" />
-              </div>
-              <CardTitle className="text-2xl">Session Created!</CardTitle>
-              <CardDescription className="text-gray-400">
-                Share this code or link with your partner
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {/* Session Code */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-400">
-                  Session Code
-                </label>
-                <div className="flex items-center gap-2">
-                  <div className="flex-1 rounded-lg border border-white/10 bg-white/5 px-4 py-3 text-center font-mono text-2xl font-bold tracking-wider">
-                    {createSession.data.code}
-                  </div>
-                  <Button
-                    onClick={handleCopyCode}
-                    variant="outline"
-                    size="icon"
-                    className="h-12 w-12 border-white/10 bg-white/5 hover:bg-white/10"
-                  >
-                    {copied ? (
-                      <Check className="h-5 w-5 text-[#1DB954]" />
-                    ) : (
-                      <Copy className="h-5 w-5" />
-                    )}
-                  </Button>
-                </div>
-              </div>
-
-              {/* Share Link */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-400">
-                  Share Link
-                </label>
-                <div className="flex items-center gap-2">
-                  <div className="flex-1 truncate rounded-lg border border-white/10 bg-white/5 px-4 py-3 text-sm">
-                    {mounted
-                      ? `${window.location.origin}${createSession.data.shareUrl}`
-                      : createSession.data.shareUrl}
-                  </div>
-                  <Button
-                    onClick={handleCopyLink}
-                    variant="outline"
-                    size="icon"
-                    className="h-12 w-12 border-white/10 bg-white/5 hover:bg-white/10"
-                  >
-                    {copied ? (
-                      <Check className="h-5 w-5 text-[#1DB954]" />
-                    ) : (
-                      <Copy className="h-5 w-5" />
-                    )}
-                  </Button>
-                </div>
-              </div>
-
-              <div className="pt-4">
-                <p className="text-center text-sm text-gray-400">
-                  Expires in 24 hours • Waiting for partner to join...
-                </p>
-              </div>
-
-              {/* Dashboard Link */}
-              <Button
-                onClick={() => router.push("/dashboard")}
-                variant="outline"
-                className="w-full border-white/10 bg-white/5 hover:bg-white/10"
-              >
-                <LayoutDashboard className="mr-2 h-4 w-4" />
-                View All Sessions
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-    );
-  }
-
-  const pendingSessions = sessions?.filter((s) => s.status === "PENDING") ?? [];
-
+  // Authenticated - show create invitation screen
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#1a1625] to-black text-white">
+      <GradientBackground />
       <Header />
-      <div className="container mx-auto px-4 py-8">
-        <div className="mx-auto max-w-2xl">
-          {/* Active Sessions Section */}
-          {pendingSessions.length > 0 && (
-            <Card className="mb-6 border-white/10 bg-white/5 backdrop-blur-sm">
-              <CardHeader>
-                <CardTitle className="text-lg">Active Sessions</CardTitle>
-                <CardDescription className="text-gray-400">
-                  You have {pendingSessions.length} session
-                  {pendingSessions.length > 1 ? "s" : ""} waiting for a partner
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-2">
-                {pendingSessions.slice(0, 3).map((session) => (
-                  <div
-                    key={session.id}
-                    className="flex items-center justify-between rounded-lg border border-white/10 bg-white/5 p-3"
-                  >
-                    <div>
-                      <p className="font-medium text-white">
-                        Code: {session.code}
-                      </p>
-                      <p className="text-sm text-gray-400">
-                        Created{" "}
-                        {new Date(session.createdAt).toLocaleDateString()}
-                      </p>
-                    </div>
-                    <Button
-                      onClick={() => router.push("/dashboard")}
-                      variant="outline"
-                      size="sm"
-                      className="border-white/10 bg-white/5 hover:bg-white/10"
-                    >
-                      View
-                      <ArrowRight className="ml-2 h-4 w-4" />
-                    </Button>
-                  </div>
-                ))}
-                {pendingSessions.length > 3 && (
-                  <Button
-                    onClick={() => router.push("/dashboard")}
-                    variant="ghost"
-                    className="w-full text-sm text-gray-400 hover:text-white"
-                  >
-                    View all {pendingSessions.length} sessions
-                  </Button>
-                )}
-              </CardContent>
-            </Card>
-          )}
+      <div className="relative flex min-h-[calc(100vh-80px)] items-center justify-center overflow-hidden px-4 py-12">
+        {/* Background gradient orbs */}
+        <div className="absolute top-1/4 left-1/4 h-96 w-96 rounded-full bg-[#1DB954]/20 blur-[100px]" />
+        <div className="absolute right-1/4 bottom-1/4 h-96 w-96 rounded-full bg-[#FF006E]/20 blur-[100px]" />
 
-          {/* Create New Session Card */}
-          <Card className="w-full border-white/10 bg-white/5 backdrop-blur-sm">
-            <CardHeader className="text-center">
-              <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-[#1DB954] to-[#FF006E]">
-                <Music2 className="h-8 w-8 text-white" />
-              </div>
-              <CardTitle className="text-2xl">Create Your Blend</CardTitle>
-              <CardDescription className="text-gray-400">
-                Start a new music blend session with your partner
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <Button
-                onClick={handleCreateSession}
-                className="w-full rounded-full bg-[#1DB954] px-6 py-6 text-lg font-bold text-black hover:bg-[#1ed760]"
-                disabled={createSession.isPending}
-              >
-                {createSession.isPending ? (
-                  <>
-                    <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                    Creating...
-                  </>
-                ) : (
-                  "Create Blend Session"
-                )}
-              </Button>
+        {/* Floating album art background */}
+        {albums.length > 0 && (
+          <div className="pointer-events-none absolute inset-0">
+            {albums.slice(0, 8).map((album, index) => {
+              if (!album.image) return null;
+              const delay = index * 0.3;
+              const duration = 20 + Math.random() * 10;
+              const startX = Math.random() * 100;
+              const startY = 100 + Math.random() * 20;
+              const endY = -20 - Math.random() * 20;
+              const size = 80 + Math.random() * 60;
 
-              {isAuthenticated && (
-                <Button
-                  onClick={() => router.push("/dashboard")}
-                  variant="outline"
-                  className="w-full border-white/10 bg-white/5 hover:bg-white/10"
+              return (
+                <motion.div
+                  key={`${album.id}-${index}`}
+                  className="absolute rounded-lg opacity-30"
+                  style={{
+                    width: size,
+                    height: size,
+                    left: `${startX}%`,
+                  }}
+                  initial={{
+                    y: startY,
+                    opacity: 0,
+                  }}
+                  animate={{
+                    y: endY,
+                    opacity: [0, 0.3, 0.3, 0],
+                  }}
+                  transition={{
+                    duration,
+                    delay,
+                    repeat: Infinity,
+                    ease: "linear",
+                  }}
                 >
-                  <LayoutDashboard className="mr-2 h-4 w-4" />
-                  View Dashboard
-                </Button>
+                  <Image
+                    src={album.image}
+                    alt=""
+                    width={size}
+                    height={size}
+                    className="h-full w-full rounded-lg object-cover"
+                    unoptimized
+                  />
+                </motion.div>
+              );
+            })}
+          </div>
+        )}
+
+        {/* Main content */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="relative z-10 w-full max-w-2xl text-center"
+        >
+          <motion.div
+            initial={{ scale: 0, rotate: -180 }}
+            animate={{ scale: 1, rotate: 0 }}
+            transition={{ type: "spring", duration: 0.8 }}
+            className="mx-auto mb-8 flex h-32 w-32 items-center justify-center rounded-full bg-gradient-to-br from-[#1DB954] via-[#FF006E] to-[#1DB954]"
+          >
+            <Users className="h-16 w-16 text-white" />
+          </motion.div>
+
+          <motion.h1
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="mb-6 text-5xl font-bold text-white md:text-6xl lg:text-7xl"
+          >
+            Invite Your Partner
+          </motion.h1>
+
+          <motion.p
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+            className="mb-12 text-xl text-gray-400"
+          >
+            Create a magical music blend together. Share your unique code and
+            discover your compatibility.
+          </motion.p>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4 }}
+          >
+            <Button
+              onClick={handleCreateSession}
+              disabled={createSession.isPending}
+              className="group relative overflow-hidden rounded-full bg-[#1DB954] px-12 py-8 text-xl font-bold text-black transition-all hover:scale-105 hover:bg-[#1ed760]"
+            >
+              {createSession.isPending ? (
+                <>
+                  <Loader2 className="mr-3 h-6 w-6 animate-spin" />
+                  Creating Your Blend...
+                </>
+              ) : (
+                <>
+                  Create Blend Session
+                  <ArrowRight className="ml-3 h-6 w-6 transition-transform group-hover:translate-x-1" />
+                </>
               )}
-            </CardContent>
-          </Card>
-        </div>
+            </Button>
+          </motion.div>
+
+          {/* Visual preview of what's coming */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.6 }}
+            className="mt-16 flex items-center justify-center gap-4 text-sm text-gray-500"
+          >
+            <div className="h-px w-16 bg-gradient-to-r from-transparent to-white/20" />
+            <span>Blend your music tastes</span>
+            <div className="h-px w-16 bg-gradient-to-l from-transparent to-white/20" />
+          </motion.div>
+        </motion.div>
       </div>
     </div>
   );

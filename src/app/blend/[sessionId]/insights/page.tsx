@@ -2,48 +2,35 @@
 
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState, useRef } from "react";
+import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
-import {
-  Music2,
-  Loader2,
-  Users,
-  TrendingUp,
-  ArrowRight,
-  Sparkles,
-  ArrowLeft,
-} from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { api } from "@/trpc/react";
-import Image from "next/image";
-import {
-  RadarChart,
-  Radar,
-  PolarGrid,
-  PolarAngleAxis,
-  PolarRadiusAxis,
-  ResponsiveContainer,
-} from "recharts";
 import { Header } from "@/components/nav/Header";
-import { Breadcrumbs } from "@/components/nav/Breadcrumbs";
+import { LoadingAnimation } from "@/components/animations/LoadingAnimation";
+import {
+  RevealSequence,
+  RadarChartReveal,
+  PersonalityInsightsReveal,
+} from "@/components/blend/RevealSequence";
+import { CompatibilityReveal } from "@/components/blend/CompatibilityReveal";
+import { ArtistGrid } from "@/components/blend/ArtistGrid";
+import { UserAvatars } from "@/components/blend/UserAvatars";
+import { GradientBackground } from "@/components/GradientBackground";
 
 export default function InsightsPage() {
   const params = useParams();
   const router = useRouter();
   const sessionId = params?.sessionId as string;
   const [dataFetched, setDataFetched] = useState(false);
+  const [showReveal, setShowReveal] = useState(false);
   const fetchInitiatedRef = useRef(false);
 
   // Reset ref when sessionId changes
   useEffect(() => {
     fetchInitiatedRef.current = false;
     setDataFetched(false);
+    setShowReveal(false);
   }, [sessionId]);
 
   const { data: session, isLoading: isLoadingSession } =
@@ -71,6 +58,10 @@ export default function InsightsPage() {
     onSuccess: () => {
       // Refetch session to get updated insights
       void utils.session.get.invalidate({ id: sessionId });
+      // Show reveal after a short delay
+      setTimeout(() => {
+        setShowReveal(true);
+      }, 500);
     },
   });
 
@@ -92,9 +83,10 @@ export default function InsightsPage() {
         fetchData.mutate({ sessionId });
       } else {
         setDataFetched(true);
+        setShowReveal(true);
       }
     }
-  }, [session, dataFetched, sessionId]);
+  }, [session, dataFetched, sessionId, fetchData]);
 
   useEffect(() => {
     if (
@@ -110,25 +102,24 @@ export default function InsightsPage() {
       }, 500);
       return () => clearTimeout(timer);
     }
-  }, [dataFetched, session, sessionId]);
+  }, [dataFetched, session, sessionId, calculateInsights]);
 
   if (isLoadingSession || fetchData.isPending || calculateInsights.isPending) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-[#1a1625] to-black text-white">
+        <GradientBackground />
         <Header />
         <div className="flex min-h-[calc(100vh-80px)] items-center justify-center">
-          <Card className="w-full max-w-md border-white/10 bg-white/5 backdrop-blur-sm">
-            <CardContent className="flex flex-col items-center justify-center py-12">
-              <Loader2 className="mb-4 h-12 w-12 animate-spin text-[#1DB954]" />
-              <p className="text-lg text-gray-300">
-                {fetchData.isPending
-                  ? "Fetching your music data..."
-                  : calculateInsights.isPending
-                    ? "Calculating insights..."
-                    : "Loading..."}
-              </p>
-            </CardContent>
-          </Card>
+          <LoadingAnimation
+            message={
+              fetchData.isPending
+                ? "Fetching your music data..."
+                : calculateInsights.isPending
+                  ? "Calculating insights..."
+                  : "Loading..."
+            }
+            size="lg"
+          />
         </div>
       </div>
     );
@@ -137,28 +128,36 @@ export default function InsightsPage() {
   if (!session) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-[#1a1625] to-black text-white">
+        <GradientBackground />
         <Header />
         <div className="flex min-h-[calc(100vh-80px)] items-center justify-center">
-          <Card className="w-full max-w-md border-white/10 bg-white/5 backdrop-blur-sm">
-            <CardHeader className="text-center">
-              <CardTitle className="text-2xl">Session Not Found</CardTitle>
-              <CardDescription className="text-gray-400">
-                This blend session doesn&apos;t exist
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Button
-                onClick={() => router.push("/")}
-                className="w-full rounded-full bg-[#1DB954] text-black hover:bg-[#1ed760]"
-              >
-                Go Home
-              </Button>
-            </CardContent>
-          </Card>
+          <div className="w-full max-w-md text-center">
+            <h1 className="mb-4 text-2xl font-bold text-white">
+              Session Not Found
+            </h1>
+            <p className="mb-8 text-gray-400">
+              This blend session doesn&apos;t exist
+            </p>
+            <Button
+              onClick={() => router.push("/")}
+              className="rounded-full bg-[#1DB954] text-black hover:bg-[#1ed760]"
+            >
+              Go Home
+            </Button>
+          </div>
         </div>
       </div>
     );
   }
+
+  const creator = session.creator as {
+    name?: string | null;
+    image?: string | null;
+  };
+  const partner = session.partner as {
+    name?: string | null;
+    image?: string | null;
+  };
 
   const compatibilityScore = session.compatibilityScore ?? 0;
   const sharedArtists =
@@ -202,15 +201,6 @@ export default function InsightsPage() {
       }>;
     }) ?? {};
 
-  const creator = session.creator as {
-    name?: string | null;
-    image?: string | null;
-  };
-  const partner = session.partner as {
-    name?: string | null;
-    image?: string | null;
-  };
-
   // Prepare radar chart data
   const radarData =
     insights.audioFeatures?.creator && insights.audioFeatures?.partner
@@ -253,239 +243,91 @@ export default function InsightsPage() {
         ]
       : [];
 
-  return (
-    <div className="min-h-screen bg-gradient-to-b from-[#1a1625] to-black text-white">
-      <Header />
-      <div className="container mx-auto px-4 py-8">
-        {/* Breadcrumbs */}
-        <div className="mb-4 flex items-center justify-between">
-          <Breadcrumbs
-            items={[
-              { label: "Insights", href: `/blend/${sessionId}/insights` },
-            ]}
-          />
-          <Button
-            onClick={() => router.push("/dashboard")}
-            variant="ghost"
-            className="text-gray-400 hover:text-white"
+  // Build reveal steps
+  const revealSteps = [];
+
+  // Step 1: User avatars blending
+  if (creator && partner) {
+    revealSteps.push({
+      id: "avatars",
+      component: (
+        <div className="flex flex-col items-center justify-center">
+          <motion.h2
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-8 text-3xl font-bold text-white md:text-4xl"
           >
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to Dashboard
-          </Button>
+            Your Music is Blending...
+          </motion.h2>
+          <UserAvatars
+            creator={creator}
+            partner={partner}
+            size="lg"
+            showConnection
+          />
         </div>
-        {/* Header */}
-        <div className="mb-8 text-center">
-          <h1 className="mb-2 text-4xl font-bold text-white">
-            Your Music Compatibility
-          </h1>
-          <p className="text-gray-400">
-            {creator.name ?? "You"} & {partner.name ?? "Partner"}
-          </p>
-        </div>
+      ),
+    });
+  }
 
-        {/* Compatibility Score */}
-        <Card className="mb-8 border-white/10 bg-white/5 backdrop-blur-sm">
-          <CardHeader className="text-center">
-            <CardTitle className="text-2xl">Compatibility Score</CardTitle>
-            <CardDescription className="text-gray-400">
-              Based on your shared music taste
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="flex items-center justify-center">
-              <div className="relative h-48 w-48">
-                <svg className="h-48 w-48 -rotate-90 transform">
-                  <circle
-                    cx="96"
-                    cy="96"
-                    r="88"
-                    stroke="rgba(255,255,255,0.1)"
-                    strokeWidth="16"
-                    fill="none"
-                  />
-                  <circle
-                    cx="96"
-                    cy="96"
-                    r="88"
-                    stroke="#1DB954"
-                    strokeWidth="16"
-                    fill="none"
-                    strokeDasharray={`${(compatibilityScore / 100) * 2 * Math.PI * 88} ${2 * Math.PI * 88}`}
-                    strokeLinecap="round"
-                    className="transition-all duration-1000"
-                  />
-                </svg>
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="text-center">
-                    <div className="text-5xl font-bold text-[#1DB954]">
-                      {compatibilityScore}%
-                    </div>
-                    <div className="text-sm text-gray-400">Match</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <Progress value={compatibilityScore} className="h-3" />
-          </CardContent>
-        </Card>
+  // Step 2: Compatibility score reveal
+  revealSteps.push({
+    id: "compatibility",
+    component: (
+      <CompatibilityReveal
+        score={compatibilityScore}
+        onComplete={() => {
+          // Auto-advance handled by RevealSequence
+        }}
+      />
+    ),
+  });
 
-        {/* Shared Artists */}
-        {sharedArtists.length > 0 && (
-          <Card className="mb-8 border-white/10 bg-white/5 backdrop-blur-sm">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Users className="h-5 w-5 text-[#1DB954]" />
-                Top Shared Artists
-              </CardTitle>
-              <CardDescription className="text-gray-400">
-                Artists you both love
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-2 gap-4 sm:grid-cols-5">
-                {sharedArtists.slice(0, 10).map((artist) => (
-                  <div
-                    key={artist.id}
-                    className="group cursor-pointer space-y-2 rounded-lg p-3 transition-colors hover:bg-white/5"
-                  >
-                    <div className="relative aspect-square w-full overflow-hidden rounded-full">
-                      {artist.image ? (
-                        <Image
-                          src={artist.image}
-                          alt={artist.name}
-                          fill
-                          className="object-cover"
-                        />
-                      ) : (
-                        <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-[#1DB954] to-[#FF006E]">
-                          <Music2 className="h-8 w-8 text-white" />
-                        </div>
-                      )}
-                    </div>
-                    <div className="text-center">
-                      <p className="truncate text-sm font-medium text-white">
-                        {artist.name}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        )}
+  // Step 3: Shared artists
+  if (sharedArtists.length > 0) {
+    revealSteps.push({
+      id: "artists",
+      component: <ArtistGrid artists={sharedArtists} />,
+    });
+  }
 
-        {/* Audio Features Radar Chart */}
-        {radarData.length > 0 && (
-          <Card className="mb-8 border-white/10 bg-white/5 backdrop-blur-sm">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <TrendingUp className="h-5 w-5 text-[#1DB954]" />
-                Audio Features Comparison
-              </CardTitle>
-              <CardDescription className="text-gray-400">
-                How your music styles compare
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ResponsiveContainer width="100%" height={400}>
-                <RadarChart data={radarData}>
-                  <PolarGrid stroke="rgba(255,255,255,0.1)" />
-                  <PolarAngleAxis
-                    dataKey="feature"
-                    tick={{ fill: "#fff", fontSize: 12 }}
-                  />
-                  <PolarRadiusAxis
-                    angle={90}
-                    domain={[0, 100]}
-                    tick={{ fill: "#fff", fontSize: 10 }}
-                  />
-                  <Radar
-                    name={creator.name ?? "You"}
-                    dataKey="creator"
-                    stroke="#1DB954"
-                    fill="#1DB954"
-                    fillOpacity={0.3}
-                  />
-                  <Radar
-                    name={partner.name ?? "Partner"}
-                    dataKey="partner"
-                    stroke="#FF006E"
-                    fill="#FF006E"
-                    fillOpacity={0.3}
-                  />
-                </RadarChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
-        )}
+  // Step 4: Audio features radar chart
+  if (radarData.length > 0) {
+    revealSteps.push({
+      id: "radar",
+      component: <RadarChartReveal data={radarData} />,
+    });
+  }
 
-        {/* Personality Insights */}
-        {insights.personality && insights.personality.length > 0 && (
-          <Card className="mb-8 border-white/10 bg-white/5 backdrop-blur-sm">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Sparkles className="h-5 w-5 text-[#1DB954]" />
-                Personality Insights
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2">
-                {insights.personality.map((insight, index) => (
-                  <div
-                    key={index}
-                    className="rounded-lg border border-white/10 bg-white/5 p-3"
-                  >
-                    <p className="text-sm text-white">{insight}</p>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        )}
+  // Step 5: Personality insights
+  if (insights.personality && insights.personality.length > 0) {
+    revealSteps.push({
+      id: "personality",
+      component: <PersonalityInsightsReveal insights={insights.personality} />,
+    });
+  }
 
-        {/* Shared Tracks */}
-        {insights.sharedTracks && insights.sharedTracks.length > 0 && (
-          <Card className="mb-8 border-white/10 bg-white/5 backdrop-blur-sm">
-            <CardHeader>
-              <CardTitle>Top Shared Tracks</CardTitle>
-              <CardDescription className="text-gray-400">
-                Songs you both love
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2">
-                {insights.sharedTracks.slice(0, 10).map((track) => (
-                  <div
-                    key={track.id}
-                    className="flex items-center gap-3 rounded-lg p-2 transition-colors hover:bg-white/5"
-                  >
-                    {track.image && (
-                      <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded">
-                        <Image
-                          src={track.image}
-                          alt={track.name}
-                          fill
-                          className="object-cover"
-                        />
-                      </div>
-                    )}
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate font-medium text-white">
-                        {track.name}
-                      </p>
-                      <p className="truncate text-sm text-gray-400">
-                        {track.artists} • {track.album}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Next Step Button */}
-        <div className="flex justify-center">
+  // Show reveal sequence if ready
+  if (showReveal && revealSteps.length > 0) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-[#1a1625] to-black text-white">
+        <GradientBackground />
+        <Header />
+        <RevealSequence
+          steps={revealSteps}
+          autoAdvance={true}
+          autoAdvanceDelay={4000}
+          onComplete={() => {
+            // Show continue button after all reveals
+          }}
+        />
+        {/* Continue Button - appears after all reveals */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: revealSteps.length * 4 + 1 }}
+          className="absolute bottom-8 left-1/2 -translate-x-1/2"
+        >
           <Button
             onClick={() => router.push(`/blend/${sessionId}/customize`)}
             className="rounded-full bg-[#1DB954] px-8 py-6 text-lg font-bold text-black hover:bg-[#1ed760]"
@@ -493,7 +335,18 @@ export default function InsightsPage() {
             Customize Your Blend
             <ArrowRight className="ml-2 h-5 w-5" />
           </Button>
-        </div>
+        </motion.div>
+      </div>
+    );
+  }
+
+  // Loading or waiting state
+  return (
+    <div className="min-h-screen bg-gradient-to-b from-[#1a1625] to-black text-white">
+      <GradientBackground />
+      <Header />
+      <div className="flex min-h-[calc(100vh-80px)] items-center justify-center">
+        <LoadingAnimation message="Preparing your insights..." size="lg" />
       </div>
     </div>
   );

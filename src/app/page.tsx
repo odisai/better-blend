@@ -40,7 +40,23 @@ export default function LandingPage() {
     }
   };
   return (
-    <div className="min-h-screen w-full overflow-hidden bg-linear-to-b from-[#1a1625] to-black text-white selection:bg-[#1DB954] selection:text-black">
+    <div className="min-h-screen w-full overflow-hidden bg-gradient-to-b from-[#1a1625] to-black text-white selection:bg-[#1DB954] selection:text-black">
+      {/* Subtle gradient overlays for texture */}
+      <div className="pointer-events-none fixed inset-0 z-0">
+        {/* Radial gradients behind text sections */}
+        <div className="animate-gradient-drift absolute top-1/4 left-1/4 h-[400px] w-[400px] rounded-full bg-gradient-to-br from-purple-500/8 via-pink-500/6 to-transparent blur-3xl" />
+        <div
+          className="animate-gradient-pulse absolute top-1/2 right-1/4 h-[500px] w-[500px] rounded-full bg-gradient-to-br from-blue-500/8 via-cyan-500/6 to-transparent blur-3xl"
+          style={{ animationDelay: "2s" }}
+        />
+        <div
+          className="animate-gradient-drift absolute bottom-1/4 left-1/2 h-[350px] w-[350px] rounded-full bg-gradient-to-br from-pink-500/8 via-purple-500/6 to-transparent blur-3xl"
+          style={{ animationDelay: "4s" }}
+        />
+        {/* Linear gradients for horizontal texture */}
+        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/2 to-transparent opacity-30" />
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-white/1 to-transparent opacity-40" />
+      </div>
       {/* Custom Floating Animation Styles */}
       <style>{`
         @keyframes float {
@@ -69,6 +85,27 @@ export default function LandingPage() {
             background-position: 100% 50%;
           }
         }
+        @keyframes gradient-pulse {
+          0%, 100% {
+            opacity: 0.6;
+            transform: scale(1);
+          }
+          50% {
+            opacity: 0.8;
+            transform: scale(1.1);
+          }
+        }
+        @keyframes gradient-drift {
+          0%, 100% {
+            transform: translate(0, 0);
+          }
+          33% {
+            transform: translate(20px, -15px);
+          }
+          66% {
+            transform: translate(-15px, 20px);
+          }
+        }
         .animate-float {
           animation: float 8s ease-in-out infinite;
         }
@@ -84,7 +121,13 @@ export default function LandingPage() {
         }
         .animate-gradient {
           background-size: 200% 200%;
-          animation: gradient-shift 3s ease infinite;
+          animation: gradient-shift 8s ease-in-out infinite;
+        }
+        .animate-gradient-pulse {
+          animation: gradient-pulse 12s ease-in-out infinite;
+        }
+        .animate-gradient-drift {
+          animation: gradient-drift 20s ease-in-out infinite;
         }
         .glass-card {
           background: rgba(255, 255, 255, 0.05);
@@ -171,7 +214,9 @@ export default function LandingPage() {
       <main className="relative z-10 container mx-auto px-4 py-8 sm:px-6 sm:py-12 md:py-20 lg:py-32">
         <div className="grid items-center gap-8 sm:gap-12 lg:grid-cols-2 lg:gap-20">
           {/* Left Content */}
-          <div className="space-y-8 text-center lg:text-left">
+          <div className="relative space-y-8 text-center lg:text-left">
+            {/* Subtle gradient behind text */}
+            <div className="pointer-events-none absolute -inset-8 -z-10 rounded-2xl bg-gradient-to-br from-purple-500/10 via-pink-500/8 to-transparent opacity-60 blur-2xl" />
             <div className="space-y-4">
               <Badge
                 variant="outline"
@@ -405,7 +450,7 @@ export default function LandingPage() {
                             key={index}
                             translateZ={index === 0 ? 20 : 10}
                             className={cn(
-                              "w-full flex items-center gap-3 rounded-xl p-2 transition-colors",
+                              "flex w-full items-center gap-3 rounded-xl p-2 transition-colors",
                               track.playing
                                 ? "bg-white/10 shadow-lg"
                                 : "hover:bg-white/5",

@@ -2,20 +2,17 @@
 
 import { useParams, useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
+import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Slider } from "@/components/ui/slider";
-import { Music2, Loader2, ArrowRight, ArrowLeft, Sparkles } from "lucide-react";
+import { Loader2, ArrowRight, ArrowLeft } from "lucide-react";
 import { api } from "@/trpc/react";
-import Image from "next/image";
 import { Header } from "@/components/nav/Header";
-import { Breadcrumbs } from "@/components/nav/Breadcrumbs";
+import { LoadingAnimation } from "@/components/animations/LoadingAnimation";
+import { DragToBlend } from "@/components/blend/DragToBlend";
+import { TimePeriodTimeline } from "@/components/blend/TimePeriodTimeline";
+import { PlaylistLengthCards } from "@/components/blend/PlaylistLengthCards";
+import { BlendPreview } from "@/components/blend/BlendPreview";
+import { GradientBackground } from "@/components/GradientBackground";
 
 export default function CustomizePage() {
   const params = useParams();
@@ -45,7 +42,6 @@ export default function CustomizePage() {
     },
   });
 
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
   const generatePlaylistMutation = api.blend.generatePlaylist.useMutation({
     onSuccess: () => {
       router.push(`/blend/${sessionId}/success`);
@@ -63,29 +59,34 @@ export default function CustomizePage() {
     }
   }, [session]);
 
-  const handleSaveConfig = () => {
-    updateConfig.mutate({
-      sessionId,
-      ratio,
-      timeRange,
-      playlistLength,
-    });
-  };
-
   const handleGeneratePlaylist = () => {
-    handleSaveConfig();
-    setTimeout(() => {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
-      generatePlaylistMutation.mutate({ sessionId });
-    }, 500);
+    updateConfig.mutate(
+      {
+        sessionId,
+        ratio,
+        timeRange,
+        playlistLength,
+      },
+      {
+        onSuccess: () => {
+          setTimeout(() => {
+            generatePlaylistMutation.mutate({ sessionId });
+          }, 500);
+        },
+      },
+    );
   };
 
   if (isLoadingSession) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-[#1a1625] to-black text-white">
+        <GradientBackground />
         <Header />
         <div className="flex min-h-[calc(100vh-80px)] items-center justify-center">
-          <Loader2 className="h-8 w-8 animate-spin text-[#1DB954]" />
+          <LoadingAnimation
+            message="Loading customization options..."
+            size="lg"
+          />
         </div>
       </div>
     );
@@ -94,24 +95,23 @@ export default function CustomizePage() {
   if (!session) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-[#1a1625] to-black text-white">
+        <GradientBackground />
         <Header />
         <div className="flex min-h-[calc(100vh-80px)] items-center justify-center">
-          <Card className="w-full max-w-md border-white/10 bg-white/5 backdrop-blur-sm">
-            <CardHeader className="text-center">
-              <CardTitle className="text-2xl">Session Not Found</CardTitle>
-              <CardDescription className="text-gray-400">
-                This blend session doesn&apos;t exist
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Button
-                onClick={() => router.push("/")}
-                className="w-full rounded-full bg-[#1DB954] text-black hover:bg-[#1ed760]"
-              >
-                Go Home
-              </Button>
-            </CardContent>
-          </Card>
+          <div className="w-full max-w-md text-center">
+            <h1 className="mb-4 text-2xl font-bold text-white">
+              Session Not Found
+            </h1>
+            <p className="mb-8 text-gray-400">
+              This blend session doesn&apos;t exist
+            </p>
+            <Button
+              onClick={() => router.push("/")}
+              className="rounded-full bg-[#1DB954] text-black hover:bg-[#1ed760]"
+            >
+              Go Home
+            </Button>
+          </div>
         </div>
       </div>
     );
@@ -131,260 +131,106 @@ export default function CustomizePage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#1a1625] to-black text-white">
+      <GradientBackground />
       <Header />
       <div className="container mx-auto px-4 py-8">
-        {/* Breadcrumbs */}
-        <div className="mb-4 flex items-center justify-between">
-          <Breadcrumbs
-            items={[
-              { label: "Insights", href: `/blend/${sessionId}/insights` },
-              { label: "Customize", href: `/blend/${sessionId}/customize` },
-            ]}
-          />
-          <Button
-            onClick={() => router.push(`/blend/${sessionId}/insights`)}
-            variant="ghost"
-            className="text-gray-400 hover:text-white"
-          >
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to Insights
-          </Button>
-        </div>
         {/* Header */}
-        <div className="mb-8 text-center">
-          <h1 className="mb-2 text-4xl font-bold text-white">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-12 text-center"
+        >
+          <h1 className="mb-2 text-4xl font-bold text-white md:text-5xl">
             Customize Your Blend
           </h1>
-          <p className="text-gray-400">
-            Adjust the settings to create your perfect playlist
+          <p className="text-lg text-gray-400">
+            Mix your music tastes to create the perfect playlist
           </p>
-        </div>
+        </motion.div>
 
-        {/* User Profiles */}
-        <div className="mb-8 grid grid-cols-2 gap-4">
-          <Card className="border-white/10 bg-white/5 backdrop-blur-sm">
-            <CardContent className="flex flex-col items-center py-6">
-              <div className="relative mb-4 h-24 w-24 overflow-hidden rounded-full border-4 border-[#1DB954]">
-                {creator.image ? (
-                  <Image
-                    src={creator.image}
-                    alt={creator.name ?? "Creator"}
-                    fill
-                    className="object-cover"
-                  />
-                ) : (
-                  <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-[#1DB954] to-[#FF006E]">
-                    <Music2 className="h-12 w-12 text-white" />
-                  </div>
-                )}
-              </div>
-              <p className="text-lg font-semibold text-white">
-                {creator.name ?? "Creator"}
-              </p>
-              <p className="text-sm text-gray-400">{creatorPercentage}%</p>
-            </CardContent>
-          </Card>
-
-          <Card className="border-white/10 bg-white/5 backdrop-blur-sm">
-            <CardContent className="flex flex-col items-center py-6">
-              <div className="relative mb-4 h-24 w-24 overflow-hidden rounded-full border-4 border-[#FF006E]">
-                {partner.image ? (
-                  <Image
-                    src={partner.image}
-                    alt={partner.name ?? "Partner"}
-                    fill
-                    className="object-cover"
-                  />
-                ) : (
-                  <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-[#FF006E] to-[#1DB954]">
-                    <Music2 className="h-12 w-12 text-white" />
-                  </div>
-                )}
-              </div>
-              <p className="text-lg font-semibold text-white">
-                {partner.name ?? "Partner"}
-              </p>
-              <p className="text-sm text-gray-400">{partnerPercentage}%</p>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Blend Ratio */}
-        <Card className="mb-8 border-white/10 bg-white/5 backdrop-blur-sm">
-          <CardHeader>
-            <CardTitle>Blend Ratio</CardTitle>
-            <CardDescription className="text-gray-400">
-              Adjust how much each person&apos;s music appears in the playlist
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-medium text-white">
-                {creator.name ?? "You"}: {creatorPercentage}%
-              </span>
-              <span className="text-sm font-medium text-white">
-                {partner.name ?? "Partner"}: {partnerPercentage}%
-              </span>
-            </div>
-            <Slider
-              value={[ratio]}
-              onValueChange={([value]) => {
-                if (value !== undefined) {
-                  setRatio(value);
-                }
-              }}
-              min={0.3}
-              max={0.7}
-              step={0.05}
-              className="w-full"
+        <div className="mx-auto max-w-4xl space-y-12">
+          {/* Blend Ratio - Drag to Blend */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+          >
+            <DragToBlend
+              creator={creator}
+              partner={partner}
+              ratio={ratio}
+              onRatioChange={setRatio}
             />
-            <div className="flex justify-between text-xs text-gray-400">
-              <span>30% / 70%</span>
-              <span>50% / 50%</span>
-              <span>70% / 30%</span>
-            </div>
-          </CardContent>
-        </Card>
+          </motion.div>
 
-        {/* Time Range */}
-        <Card className="mb-8 border-white/10 bg-white/5 backdrop-blur-sm">
-          <CardHeader>
-            <CardTitle>Time Period</CardTitle>
-            <CardDescription className="text-gray-400">
-              Choose which time period to analyze
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-3 gap-3">
-              {[
-                {
-                  value: "short_term" as const,
-                  label: "4 Weeks",
-                  desc: "Recent",
-                },
-                {
-                  value: "medium_term" as const,
-                  label: "6 Months",
-                  desc: "Popular",
-                },
-                {
-                  value: "long_term" as const,
-                  label: "All Time",
-                  desc: "Classic",
-                },
-              ].map((option) => (
-                <button
-                  key={option.value}
-                  onClick={() => setTimeRange(option.value)}
-                  className={`rounded-lg border-2 p-4 text-center transition-all ${
-                    timeRange === option.value
-                      ? "border-[#1DB954] bg-[#1DB954]/10"
-                      : "border-white/10 bg-white/5 hover:border-white/20"
-                  }`}
-                >
-                  <div className="text-lg font-semibold text-white">
-                    {option.label}
-                  </div>
-                  <div className="text-xs text-gray-400">{option.desc}</div>
-                </button>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Playlist Length */}
-        <Card className="mb-8 border-white/10 bg-white/5 backdrop-blur-sm">
-          <CardHeader>
-            <CardTitle>Playlist Length</CardTitle>
-            <CardDescription className="text-gray-400">
-              How many songs should be in your blend?
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-3 gap-3">
-              {[25, 50, 100].map((length) => (
-                <button
-                  key={length}
-                  onClick={() => setPlaylistLength(length)}
-                  className={`rounded-lg border-2 p-4 text-center transition-all ${
-                    playlistLength === length
-                      ? "border-[#1DB954] bg-[#1DB954]/10"
-                      : "border-white/10 bg-white/5 hover:border-white/20"
-                  }`}
-                >
-                  <div className="text-lg font-semibold text-white">
-                    {length}
-                  </div>
-                  <div className="text-xs text-gray-400">songs</div>
-                </button>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Configuration Summary */}
-        <Card className="mb-8 border-white/10 bg-white/5 backdrop-blur-sm">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Sparkles className="h-5 w-5 text-[#1DB954]" />
-              Configuration Summary
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2 text-sm">
-            <div className="flex justify-between">
-              <span className="text-gray-400">Blend Ratio:</span>
-              <span className="font-medium text-white">
-                {creatorPercentage}% / {partnerPercentage}%
-              </span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-400">Time Period:</span>
-              <span className="font-medium text-white">
-                {timeRange === "short_term"
-                  ? "4 Weeks"
-                  : timeRange === "medium_term"
-                    ? "6 Months"
-                    : "All Time"}
-              </span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-400">Playlist Length:</span>
-              <span className="font-medium text-white">
-                {playlistLength} songs
-              </span>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Action Buttons */}
-        <div className="flex justify-center gap-4">
-          <Button
-            onClick={() => router.push(`/blend/${sessionId}/insights`)}
-            variant="outline"
-            className="rounded-full border-white/10 bg-white/5 px-6 py-6 hover:bg-white/10"
+          {/* Time Period Timeline */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
           >
-            <ArrowLeft className="mr-2 h-5 w-5" />
-            Back to Insights
-          </Button>
-          <Button
-            onClick={handleGeneratePlaylist}
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-            disabled={generatePlaylistMutation.isPending}
-            className="rounded-full bg-[#1DB954] px-8 py-6 text-lg font-bold text-black hover:bg-[#1ed760]"
+            <TimePeriodTimeline value={timeRange} onChange={setTimeRange} />
+          </motion.div>
+
+          {/* Playlist Length Cards */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
           >
-            {/* eslint-disable-next-line @typescript-eslint/no-unsafe-member-access */}
-            {generatePlaylistMutation.isPending ? (
-              <>
-                <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                Generating...
-              </>
-            ) : (
-              <>
-                Generate Playlist
-                <ArrowRight className="ml-2 h-5 w-5" />
-              </>
-            )}
-          </Button>
+            <PlaylistLengthCards
+              value={playlistLength}
+              onChange={setPlaylistLength}
+            />
+          </motion.div>
+
+          {/* Live Preview */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4 }}
+          >
+            <BlendPreview
+              creatorPercentage={creatorPercentage}
+              partnerPercentage={partnerPercentage}
+              timeRange={timeRange}
+              playlistLength={playlistLength}
+            />
+          </motion.div>
+
+          {/* Action Buttons */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.5 }}
+            className="flex flex-col gap-4 sm:flex-row sm:justify-center"
+          >
+            <Button
+              onClick={() => router.push(`/blend/${sessionId}/insights`)}
+              variant="outline"
+              className="rounded-full border-white/10 bg-white/5 px-6 py-6 hover:bg-white/10"
+            >
+              <ArrowLeft className="mr-2 h-5 w-5" />
+              Back to Insights
+            </Button>
+            <Button
+              onClick={handleGeneratePlaylist}
+              disabled={generatePlaylistMutation.isPending}
+              className="rounded-full bg-[#1DB954] px-8 py-6 text-lg font-bold text-black hover:bg-[#1ed760]"
+            >
+              {generatePlaylistMutation.isPending ? (
+                <>
+                  <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                  Generating...
+                </>
+              ) : (
+                <>
+                  Generate Playlist
+                  <ArrowRight className="ml-2 h-5 w-5" />
+                </>
+              )}
+            </Button>
+          </motion.div>
         </div>
       </div>
     </div>

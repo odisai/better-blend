@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/card";
 import { Music2, ArrowLeft, Link2 } from "lucide-react";
 import { Header } from "@/components/nav/Header";
+import { GradientBackground } from "@/components/GradientBackground";
 
 export default function JoinPage() {
   const router = useRouter();
@@ -61,6 +62,7 @@ export default function JoinPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#1a1625] to-black text-white">
+      <GradientBackground />
       <Header />
       <div className="flex min-h-[calc(100vh-80px)] items-center justify-center px-4">
         <Card className="w-full max-w-md border-white/10 bg-white/5 backdrop-blur-sm">
@@ -87,9 +89,7 @@ export default function JoinPage() {
                   className="h-12 rounded-lg border-white/20 bg-white/5 text-white placeholder:text-gray-500 focus:border-[#1DB954] focus:ring-[#1DB954]"
                   autoFocus
                 />
-                {error && (
-                  <p className="text-sm text-red-400">{error}</p>
-                )}
+                {error && <p className="text-sm text-red-400">{error}</p>}
               </div>
               <Button
                 type="submit"
@@ -113,4 +113,3 @@ export default function JoinPage() {
     </div>
   );
 }
-

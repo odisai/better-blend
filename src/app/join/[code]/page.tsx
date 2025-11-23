@@ -1,19 +1,15 @@
 "use client";
 
 import { useRouter, useParams } from "next/navigation";
+import { useEffect, useState } from "react";
+import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Music2, Loader2, User, AlertCircle, ArrowLeft } from "lucide-react";
+import { Loader2, ArrowLeft } from "lucide-react";
 import { api } from "@/trpc/react";
 import { signIn, useSession } from "next-auth/react";
-import Image from "next/image";
 import { Header } from "@/components/nav/Header";
+import { ConnectionAnimation } from "@/components/blend/ConnectionAnimation";
+import { GradientBackground } from "@/components/GradientBackground";
 
 export default function JoinPage() {
   const router = useRouter();
@@ -22,6 +18,9 @@ export default function JoinPage() {
   const { status } = useSession();
   const isAuthenticated = status === "authenticated";
   const isCheckingAuth = status === "loading";
+  const [connectionStatus, setConnectionStatus] = useState<
+    "waiting" | "connecting" | "connected"
+  >("waiting");
 
   // Get session details if authenticated
   const { data: sessionData, isLoading: isLoadingSession } =
@@ -35,11 +34,18 @@ export default function JoinPage() {
 
   const joinSession = api.session.join.useMutation({
     onSuccess: (data) => {
-      // Redirect to insights page once both users are joined
-      router.push(`/blend/${data.id}/insights`);
+      setConnectionStatus("connecting");
+      // Wait a moment for the connection animation, then redirect
+      setTimeout(() => {
+        setConnectionStatus("connected");
+        setTimeout(() => {
+          router.push(`/blend/${data.id}/insights`);
+        }, 2000);
+      }, 1500);
     },
     onError: (error) => {
       console.error("Failed to join session:", error);
+      setConnectionStatus("waiting");
     },
   });
 
@@ -53,12 +59,24 @@ export default function JoinPage() {
       return;
     }
 
+    setConnectionStatus("connecting");
     joinSession.mutate({ code });
   };
+
+  // Auto-redirect if already joined
+  useEffect(() => {
+    if (
+      sessionData &&
+      (sessionData.status === "ACTIVE" || sessionData.status === "GENERATED")
+    ) {
+      router.push(`/blend/${sessionData.id}/insights`);
+    }
+  }, [sessionData, router]);
 
   if (isCheckingAuth || isLoadingSession) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-[#1a1625] to-black text-white">
+        <GradientBackground />
         <Header />
         <div className="flex min-h-[calc(100vh-80px)] items-center justify-center">
           <Loader2 className="h-8 w-8 animate-spin text-[#1DB954]" />
@@ -70,22 +88,32 @@ export default function JoinPage() {
   if (!isAuthenticated) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-[#1a1625] to-black text-white">
+        <GradientBackground />
         <Header />
-        <div className="flex min-h-[calc(100vh-80px)] items-center justify-center">
-          <Card className="w-full max-w-md border-white/10 bg-white/5 backdrop-blur-sm">
-            <CardHeader className="text-center">
-              <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-[#1DB954] to-[#FF006E]">
-                <Music2 className="h-8 w-8 text-white" />
-              </div>
-              <CardTitle className="text-2xl">Sign in to Join</CardTitle>
-              <CardDescription className="text-gray-400">
-                Connect your Spotify account to join this blend session
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-3">
+        <div className="flex min-h-[calc(100vh-80px)] items-center justify-center px-4">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="w-full max-w-md text-center"
+          >
+            <motion.div
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ type: "spring", duration: 0.6 }}
+              className="mx-auto mb-8 flex h-24 w-24 items-center justify-center rounded-full bg-gradient-to-br from-[#1DB954] to-[#FF006E]"
+            >
+              <Loader2 className="h-12 w-12 animate-spin text-white" />
+            </motion.div>
+            <h1 className="mb-4 text-4xl font-bold text-white">
+              Sign in to Join
+            </h1>
+            <p className="mb-8 text-lg text-gray-400">
+              Connect your Spotify account to join this blend session
+            </p>
+            <div className="space-y-4">
               <Button
                 onClick={handleJoinSession}
-                className="w-full rounded-full bg-[#1DB954] px-6 py-6 text-lg font-bold text-black hover:bg-[#1ed760]"
+                className="w-full rounded-full bg-[#1DB954] px-8 py-6 text-lg font-bold text-black hover:bg-[#1ed760]"
               >
                 Sign in with Spotify
               </Button>
@@ -97,8 +125,8 @@ export default function JoinPage() {
                 <ArrowLeft className="mr-2 h-4 w-4" />
                 Back to Home
               </Button>
-            </CardContent>
-          </Card>
+            </div>
+          </motion.div>
         </div>
       </div>
     );
@@ -108,23 +136,31 @@ export default function JoinPage() {
   if (!sessionData && !isLoadingSession) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-[#1a1625] to-black text-white">
+        <GradientBackground />
         <Header />
-        <div className="flex min-h-[calc(100vh-80px)] items-center justify-center">
-          <Card className="w-full max-w-md border-white/10 bg-white/5 backdrop-blur-sm">
-            <CardHeader className="text-center">
-              <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-red-500/20">
-                <AlertCircle className="h-8 w-8 text-red-500" />
-              </div>
-              <CardTitle className="text-2xl">Session Not Found</CardTitle>
-              <CardDescription className="text-gray-400">
-                This blend session doesn&apos;t exist or has expired
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-3">
+        <div className="flex min-h-[calc(100vh-80px)] items-center justify-center px-4">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="w-full max-w-md text-center"
+          >
+            <motion.div
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              className="mx-auto mb-8 flex h-24 w-24 items-center justify-center rounded-full bg-red-500/20"
+            >
+              <Loader2 className="h-12 w-12 text-red-500" />
+            </motion.div>
+            <h1 className="mb-4 text-4xl font-bold text-white">
+              Session Not Found
+            </h1>
+            <p className="mb-8 text-lg text-gray-400">
+              This blend session doesn&apos;t exist or has expired
+            </p>
+            <div className="space-y-4">
               <Button
                 onClick={() => router.push("/")}
-                variant="outline"
-                className="w-full rounded-full border-white/10 bg-white/5 hover:bg-white/10"
+                className="w-full rounded-full bg-[#1DB954] text-black hover:bg-[#1ed760]"
               >
                 Go Home
               </Button>
@@ -136,69 +172,39 @@ export default function JoinPage() {
                 <ArrowLeft className="mr-2 h-4 w-4" />
                 View Dashboard
               </Button>
-            </CardContent>
-          </Card>
+            </div>
+          </motion.div>
         </div>
       </div>
     );
   }
 
-  // Show creator info if session exists
+  // Show creator info if session exists and pending
   if (sessionData?.status === "PENDING" && sessionData) {
     const creator = sessionData.creator as
       | { name?: string | null; image?: string | null }
       | null
       | undefined;
-    const creatorName = creator?.name ?? "Someone";
-    const creatorImage = creator?.image ?? undefined;
 
     return (
       <div className="min-h-screen bg-gradient-to-b from-[#1a1625] to-black text-white">
+        <GradientBackground />
         <Header />
-        <div className="flex min-h-[calc(100vh-80px)] items-center justify-center">
-          <Card className="w-full max-w-md border-white/10 bg-white/5 backdrop-blur-sm">
-            <CardHeader className="text-center">
-              <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-[#1DB954] to-[#FF006E]">
-                <Music2 className="h-8 w-8 text-white" />
-              </div>
-              <CardTitle className="text-2xl">Join Blend Session</CardTitle>
-              <CardDescription className="text-gray-400">
-                {creatorName} wants to blend with you!
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              {/* Creator Profile */}
-              <div className="flex flex-col items-center gap-4">
-                <div className="relative h-24 w-24 overflow-hidden rounded-full border-4 border-[#1DB954]">
-                  {creatorImage ? (
-                    <Image
-                      src={creatorImage}
-                      alt={creatorName}
-                      width={96}
-                      height={96}
-                      className="h-full w-full object-cover"
-                    />
-                  ) : (
-                    <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-[#1DB954] to-[#FF006E]">
-                      <User className="h-12 w-12 text-white" />
-                    </div>
-                  )}
-                </div>
-                <div className="text-center">
-                  <p className="text-lg font-semibold text-white">
-                    {creator?.name ?? "Anonymous"}
-                  </p>
-                  <p className="text-sm text-gray-400">
-                    Session Code: {sessionData.code}
-                  </p>
-                </div>
-              </div>
-
-              {/* Join Button */}
+        <ConnectionAnimation
+          creator={creator ?? { name: "Someone", image: null }}
+          status={connectionStatus}
+        />
+        {connectionStatus === "waiting" && (
+          <div className="absolute right-0 bottom-8 left-0 px-4">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mx-auto max-w-md"
+            >
               <Button
                 onClick={handleJoinSession}
-                className="w-full rounded-full bg-[#1DB954] px-6 py-6 text-lg font-bold text-black hover:bg-[#1ed760]"
                 disabled={joinSession.isPending}
+                className="w-full rounded-full bg-[#1DB954] px-8 py-6 text-lg font-bold text-black hover:bg-[#1ed760]"
               >
                 {joinSession.isPending ? (
                   <>
@@ -209,39 +215,33 @@ export default function JoinPage() {
                   "Join Blend Session"
                 )}
               </Button>
-
               {joinSession.error && (
-                <div className="rounded-lg border border-red-500/20 bg-red-500/10 p-3 text-sm text-red-400">
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="mt-4 rounded-lg border border-red-500/20 bg-red-500/10 p-3 text-center text-sm text-red-400"
+                >
                   {joinSession.error.message}
-                </div>
+                </motion.div>
               )}
-
               <Button
                 onClick={() => router.push("/")}
                 variant="ghost"
-                className="w-full text-gray-400 hover:text-white"
+                className="mt-4 w-full text-gray-400 hover:text-white"
               >
                 <ArrowLeft className="mr-2 h-4 w-4" />
                 Back to Home
               </Button>
-            </CardContent>
-          </Card>
-        </div>
+            </motion.div>
+          </div>
+        )}
       </div>
     );
   }
 
-  // If already joined, redirect to insights
-  if (
-    sessionData &&
-    (sessionData.status === "ACTIVE" || sessionData.status === "GENERATED")
-  ) {
-    router.push(`/blend/${sessionData.id}/insights`);
-    return null;
-  }
-
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#1a1625] to-black text-white">
+      <GradientBackground />
       <Header />
       <div className="flex min-h-[calc(100vh-80px)] items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-[#1DB954]" />

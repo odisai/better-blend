@@ -28,6 +28,7 @@ import { api } from "@/trpc/react";
 import { signIn, useSession } from "next-auth/react";
 import Image from "next/image";
 import { Header } from "@/components/nav/Header";
+import { GradientBackground } from "@/components/GradientBackground";
 
 export default function SessionStatusPage() {
   const router = useRouter();
@@ -119,6 +120,7 @@ export default function SessionStatusPage() {
   if (isCheckingAuth) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-[#1a1625] to-black text-white">
+        <GradientBackground />
         <Header />
         <div className="flex min-h-[calc(100vh-80px)] items-center justify-center">
           <Loader2 className="h-8 w-8 animate-spin text-[#1DB954]" />
@@ -130,6 +132,7 @@ export default function SessionStatusPage() {
   if (!isAuthenticated) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-[#1a1625] to-black text-white">
+        <GradientBackground />
         <Header />
         <div className="flex min-h-[calc(100vh-80px)] items-center justify-center">
           <Card className="w-full max-w-md border-white/10 bg-white/5 backdrop-blur-sm">
@@ -158,6 +161,7 @@ export default function SessionStatusPage() {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-[#1a1625] to-black text-white">
+        <GradientBackground />
         <Header />
         <div className="flex min-h-[calc(100vh-80px)] items-center justify-center">
           <Loader2 className="h-8 w-8 animate-spin text-[#1DB954]" />
@@ -169,13 +173,15 @@ export default function SessionStatusPage() {
   if (!session) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-[#1a1625] to-black text-white">
+        <GradientBackground />
         <Header />
         <div className="flex min-h-[calc(100vh-80px)] items-center justify-center">
           <Card className="w-full max-w-md border-white/10 bg-white/5 backdrop-blur-sm">
             <CardHeader className="text-center">
               <CardTitle className="text-2xl">Session Not Found</CardTitle>
               <CardDescription className="text-gray-400">
-                This blend session doesn&apos;t exist or you don&apos;t have access to it
+                This blend session doesn&apos;t exist or you don&apos;t have
+                access to it
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
@@ -211,6 +217,7 @@ export default function SessionStatusPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#1a1625] to-black text-white">
+      <GradientBackground />
       <Header />
       <div className="container mx-auto px-4 py-8">
         <div className="mx-auto max-w-2xl">
@@ -355,9 +362,7 @@ export default function SessionStatusPage() {
               <div className="flex gap-2">
                 {session.status === "ACTIVE" && (
                   <Button
-                    onClick={() =>
-                      router.push(`/blend/${session.id}/insights`)
-                    }
+                    onClick={() => router.push(`/blend/${session.id}/insights`)}
                     className="flex-1 rounded-full bg-[#1DB954] text-black hover:bg-[#1ed760]"
                   >
                     View Insights
@@ -378,7 +383,10 @@ export default function SessionStatusPage() {
                     {session.playlistUrlCreator && (
                       <Button
                         onClick={() => {
-                          window.open(session.playlistUrlCreator ?? "", "_blank");
+                          window.open(
+                            session.playlistUrlCreator ?? "",
+                            "_blank",
+                          );
                         }}
                         variant="outline"
                         className="border-white/10 bg-white/5 hover:bg-white/10"
@@ -394,9 +402,7 @@ export default function SessionStatusPage() {
               <div className="border-t border-white/10 pt-4 text-xs text-gray-500">
                 <p>Created: {new Date(session.createdAt).toLocaleString()}</p>
                 {session.expiresAt && (
-                  <p>
-                    Expires: {new Date(session.expiresAt).toLocaleString()}
-                  </p>
+                  <p>Expires: {new Date(session.expiresAt).toLocaleString()}</p>
                 )}
               </div>
             </CardContent>
@@ -406,4 +412,3 @@ export default function SessionStatusPage() {
     </div>
   );
 }
-
